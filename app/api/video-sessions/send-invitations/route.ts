@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { sendEmail, createVideoCallInvitationEmailHTML } from "@/lib/email"
+import { randomBytes } from "crypto"
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,22 +41,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Applications not found" }, { status: 404 })
     }
 
-    const emailPromises = applications.map(async (application: any) => {
+    const invitationPromises = applications.map(async (application: any) => {
       const candidateName = application.candidate_name || application.applicant_name || "Candidate"
       const candidateEmail = application.candidate_email || application.applicant_email
       const position = application.rankings?.title || application.rankings?.position || "Position"
+
+      // Generate secure access token
+      const accessToken = randomBytes(32).toString("hex")
+
+      // Set expiration time (2 hours after scheduled time, or 24 hours from now if ASAP)
+      const expiresAt = session.scheduled_at
+        ? new Date(new Date(session.scheduled_at).getTime() + 2 * 60 * 60 * 1000) // 2 hours after scheduled
+        : new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+
+      // Create invitation record
+      const { data: invitation, error: invitationError } = await supabase
+        .from("interview_invitations")
+        .insert({
+          meeting_id: session.meeting_id,
+          application_id: application.id,
+          candidate_name: candidateName,
+          candidate_email: candidateEmail,
+          access_token: accessToken,
+          expires_at: expiresAt.toISOString(),
+        })
+        .select()
+        .single()
+
+      if (invitationError) {
+        console.error("Failed to create invitation:", invitationError)
+        return { success: false, email: candidateEmail, error: invitationError.message }
+      }
+
+      // Create join URL with access token
+      const joinUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/join/${session.meeting_id}?token=${accessToken}&name=${encodeURIComponent(candidateName)}`
       const scheduledTime = session.scheduled_at ? new Date(session.scheduled_at).toLocaleString() : undefined
 
+      // Send email with join link
       const emailResult = await sendEmail({
         to: candidateEmail,
         subject: `📹 Video Interview Invitation - ${session.title}`,
-        html: createVideoCallInvitationEmailHTML(candidateName, position, session.meeting_url, scheduledTime),
+        html: createVideoCallInvitationEmailHTML(candidateName, position, joinUrl, scheduledTime),
       })
 
-      return emailResult
+      return { ...emailResult, email: candidateEmail }
     })
 
-    const results = await Promise.all(emailPromises)
+    const results = await Promise.all(invitationPromises)
     const successCount = results.filter((result) => result.success).length
     const failureCount = results.length - successCount
 

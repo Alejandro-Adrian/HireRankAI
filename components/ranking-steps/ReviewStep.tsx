@@ -104,24 +104,34 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
         </div>
 
         <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Ranking Created Successfully!</h3>
-          <p className="text-gray-600">Your job ranking has been created and is ready to receive applications.</p>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Ranking Created Successfully!</h3>
+          <p className="text-gray-600 dark:text-gray-300">
+            Your job ranking has been created and is ready to receive applications.
+          </p>
         </div>
 
-        <Card>
+        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="text-lg">Application Link</CardTitle>
+            <CardTitle className="text-lg text-gray-900 dark:text-gray-100">Application Link</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
-              <Input value={applicationLink} readOnly className="font-mono text-sm" />
+              <Input
+                value={applicationLink}
+                readOnly
+                className="font-mono text-sm bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+              />
               <Button onClick={copyToClipboard} size="sm">
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={() => window.open(applicationLink, "_blank")} variant="outline" className="flex-1">
+              <Button
+                onClick={() => window.open(applicationLink, "_blank")}
+                variant="outline"
+                className="flex-1 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Preview Application Form
               </Button>
@@ -138,65 +148,75 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
   return (
     <div className="space-y-6">
       {error && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">{error}</AlertDescription>
+        <Alert className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50">
+          <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+          <AlertDescription className="text-red-800 dark:text-red-200">{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Job Details Review */}
-      <Card>
+      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Job Details</CardTitle>
+          <CardTitle className="text-gray-900 dark:text-gray-100">Job Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <Label className="text-sm font-medium text-gray-500">Position</Label>
-            <p className="text-gray-900 capitalize">{data.position.replace("-", " ")}</p>
+            <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Position</Label>
+            <p className="text-gray-900 dark:text-gray-100 capitalize">{data.position.replace("-", " ")}</p>
           </div>
           <div>
-            <Label className="text-sm font-medium text-gray-500">Title</Label>
-            <p className="text-gray-900">{data.title}</p>
+            <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Title</Label>
+            <p className="text-gray-900 dark:text-gray-100">{data.title}</p>
           </div>
           <div>
-            <Label className="text-sm font-medium text-gray-500">Description</Label>
-            <p className="text-gray-900">{data.description}</p>
+            <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</Label>
+            <p className="text-gray-900 dark:text-gray-100">{data.description}</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Criteria Review */}
-      <Card>
+      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Evaluation Criteria & Weights</CardTitle>
+          <CardTitle className="text-gray-900 dark:text-gray-100">Evaluation Criteria & Weights</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {data.selectedCriteria.map((criteriaId) => (
-              <div key={criteriaId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={criteriaId}
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+              >
                 <div>
-                  <span className="font-medium text-gray-900">{criteriaLabels[criteriaId]}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{criteriaLabels[criteriaId]}</span>
                   {criteriaId === "area_living" && data.areaLivingCity && (
-                    <span className="text-sm text-gray-500 ml-2">({data.areaLivingCity})</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({data.areaLivingCity})</span>
                   )}
                 </div>
-                <Badge variant="secondary" className="text-sm">
+                <Badge
+                  variant="secondary"
+                  className="text-sm bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200"
+                >
                   {data.criteriaWeights[criteriaId]}% weight
                 </Badge>
               </div>
             ))}
           </div>
 
-          <div className={`mt-4 p-3 rounded-lg ${isValidWeight ? "bg-green-50" : "bg-red-50"}`}>
-            <p className={`text-sm font-medium ${isValidWeight ? "text-green-800" : "text-red-800"}`}>
+          <div
+            className={`mt-4 p-3 rounded-lg border ${isValidWeight ? "bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800" : "bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800"}`}
+          >
+            <p
+              className={`text-sm font-medium ${isValidWeight ? "text-green-800 dark:text-green-200" : "text-red-800 dark:text-red-200"}`}
+            >
               <strong>Total Weight:</strong> {totalWeight}%{isValidWeight ? " ✓" : ` (Must equal 100%)`}
             </p>
           </div>
 
           {!isValidWeight && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
+            <Alert className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <AlertDescription className="text-red-800 dark:text-red-200">
                 {totalWeight > 100
                   ? `Total weight is ${totalWeight}%. Please go back and reduce the weights to equal exactly 100%.`
                   : `Total weight is ${totalWeight}%. Please go back and increase the weights to equal exactly 100%.`}
@@ -204,11 +224,13 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
             </Alert>
           )}
 
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-medium text-blue-900">Show Evaluation Criteria to Applicants</Label>
-                <p className="text-xs text-blue-700 mt-1">
+                <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Show Evaluation Criteria to Applicants
+                </Label>
+                <p className="text-xs text-blue-700 dark:text-blue-200 mt-1">
                   When enabled, applicants will see what criteria they'll be evaluated on and their importance levels.
                 </p>
               </div>
@@ -219,8 +241,8 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
                 onClick={() => setShowCriteriaToApplicants(!showCriteriaToApplicants)}
                 className={`flex items-center gap-2 ${
                   showCriteriaToApplicants
-                    ? "bg-blue-100 border-blue-300 text-blue-700"
-                    : "bg-gray-100 border-gray-300 text-gray-600"
+                    ? "bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-200"
+                    : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300"
                 }`}
               >
                 {showCriteriaToApplicants ? (
@@ -242,7 +264,11 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
 
       {/* Actions */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onPrev} className="flex items-center gap-2 bg-transparent">
+        <Button
+          variant="outline"
+          onClick={onPrev}
+          className="flex items-center gap-2 bg-transparent border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
           <ArrowLeft className="w-4 h-4" />
           Previous
         </Button>

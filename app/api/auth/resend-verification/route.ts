@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Send verification email
     const emailResult = await sendEmail({
       to: email,
-      subject: "Email Verification Code - HireRank AI",
+      subject: "Email Verification Code - HireRankerAI",
       html: createVerificationEmailHTML(verificationCode),
     })
 

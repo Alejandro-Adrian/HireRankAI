@@ -97,55 +97,63 @@ export function JobPositionStep({ data, onUpdate, onNext }: JobPositionStepProps
     <div className="space-y-6">
       {/* Position Selection */}
       <div>
-        <Label className="text-base font-medium">Select Job Position</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-3">
+        <Label className="text-base font-medium dark:text-gray-200">Select Job Position</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mt-3">
           {jobPositions.map((position) => {
             const Icon = position.icon
             return (
               <Card
                 key={position.id}
                 className={`cursor-pointer transition-all hover:shadow-md ${
-                  data.position === position.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                  data.position === position.id
+                    ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:ring-blue-400"
+                    : "hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 dark:border-gray-600"
                 }`}
                 onClick={() => handlePositionSelect(position.id)}
               >
-                <CardContent className="p-4 text-center">
-                  <Icon className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                  <h3 className="font-medium text-gray-900">{position.title}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{position.description}</p>
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <Icon className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                    {position.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{position.description}</p>
                 </CardContent>
               </Card>
             )
           })}
         </div>
-        {errors.position && <p className="text-sm text-red-600 mt-1">{errors.position}</p>}
+        {errors.position && <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.position}</p>}
       </div>
 
       {/* Job Details */}
       <div className="space-y-4">
         <div>
-          <Label htmlFor="title">Job Title</Label>
+          <Label htmlFor="title" className="dark:text-gray-200">
+            Job Title
+          </Label>
           <Input
             id="title"
             value={data.title}
             onChange={(e) => onUpdate({ title: e.target.value })}
             placeholder="Enter job title"
-            className={errors.title ? "border-red-500" : ""}
+            className={`dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 ${errors.title ? "border-red-500 dark:border-red-400" : ""}`}
           />
-          {errors.title && <p className="text-sm text-red-600 mt-1">{errors.title}</p>}
+          {errors.title && <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.title}</p>}
         </div>
 
         <div>
-          <Label htmlFor="description">Job Description</Label>
+          <Label htmlFor="description" className="dark:text-gray-200">
+            Job Description
+          </Label>
           <Textarea
             id="description"
             value={data.description}
             onChange={(e) => onUpdate({ description: e.target.value })}
             placeholder="Describe the job responsibilities and requirements"
             rows={4}
-            className={errors.description ? "border-red-500" : ""}
+            className={`dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 ${errors.description ? "border-red-500 dark:border-red-400" : ""}`}
           />
-          {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description}</p>}
+          {errors.description && <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.description}</p>}
         </div>
       </div>
 

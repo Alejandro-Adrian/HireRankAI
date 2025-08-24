@@ -102,8 +102,10 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
     <div className="space-y-6">
       {/* Criteria Selection */}
       <div>
-        <Label className="text-base font-medium">Select Evaluation Criteria</Label>
-        <p className="text-sm text-gray-600 mt-1">Choose the criteria you want to use for evaluating applicants</p>
+        <Label className="text-base font-medium text-gray-900 dark:text-gray-100">Select Evaluation Criteria</Label>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+          Choose the criteria you want to use for evaluating applicants
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           {availableCriteria.map((criteria) => {
@@ -113,23 +115,25 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
             return (
               <Card
                 key={criteria.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  isSelected ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50"
+                className={`cursor-pointer transition-all hover:shadow-md border ${
+                  isSelected
+                    ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-700"
+                    : "hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                 }`}
                 onClick={() => handleCriteriaToggle(criteria.id)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <Checkbox checked={isSelected} onChange={() => {}} className="mt-1" />
-                    <Icon className="w-5 h-5 text-blue-600 mt-1" />
+                    <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-1" />
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{criteria.title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{criteria.description}</p>
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100">{criteria.title}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{criteria.description}</p>
 
                       {/* Special input for Area Living */}
                       {criteria.hasInput && isSelected && (
                         <div className="mt-3">
-                          <Label htmlFor="areaLivingCity" className="text-sm">
+                          <Label htmlFor="areaLivingCity" className="text-sm text-gray-700 dark:text-gray-300">
                             Preferred City
                           </Label>
                           <Input
@@ -137,7 +141,7 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
                             value={data.areaLivingCity || ""}
                             onChange={(e) => onUpdate({ areaLivingCity: e.target.value })}
                             placeholder="Enter preferred city"
-                            className="mt-1"
+                            className="mt-1 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
@@ -150,19 +154,26 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
           })}
         </div>
 
-        {errors.criteria && <p className="text-sm text-red-600 mt-2">{errors.criteria}</p>}
-        {errors.areaLivingCity && <p className="text-sm text-red-600 mt-2">{errors.areaLivingCity}</p>}
+        {errors.criteria && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{errors.criteria}</p>}
+        {errors.areaLivingCity && (
+          <p className="text-sm text-red-600 dark:text-red-400 mt-2">{errors.areaLivingCity}</p>
+        )}
       </div>
 
       {/* Selected Criteria Summary */}
       {data.selectedCriteria.length > 0 && (
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Selected Criteria ({data.selectedCriteria.length})</h4>
+        <div className="bg-blue-50 dark:bg-blue-950/50 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+            Selected Criteria ({data.selectedCriteria.length})
+          </h4>
           <div className="flex flex-wrap gap-2">
             {data.selectedCriteria.map((criteriaId) => {
               const criteria = availableCriteria.find((c) => c.id === criteriaId)
               return (
-                <span key={criteriaId} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                <span
+                  key={criteriaId}
+                  className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm border border-blue-200 dark:border-blue-700"
+                >
                   {criteria?.title}
                 </span>
               )
@@ -173,7 +184,11 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onPrev} className="flex items-center gap-2 bg-transparent">
+        <Button
+          variant="outline"
+          onClick={onPrev}
+          className="flex items-center gap-2 bg-transparent border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
           <ArrowLeft className="w-4 h-4" />
           Previous
         </Button>

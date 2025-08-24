@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   ArrowLeft,
   Trophy,
@@ -22,13 +22,17 @@ import {
   Zap,
   UserCheck,
   Send,
-  Clock,
-  Video,
-  CalendarDays,
+  UserX,
+  Trash2,
+  Search,
+  X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Application {
   id: string
@@ -68,6 +72,10 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   const [scoring, setScoring] = useState(false)
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterPosition, setFilterPosition] = useState<string>("all")
+  const [sortBy, setSortBy] = useState<string>("rank")
+  const [searchQuery, setSearchQuery] = useState<string>("")
+  const [scoreRange, setScoreRange] = useState<[number, number]>([0, 100])
   const [selectingForInterview, setSelectingForInterview] = useState<string | null>(null)
   const [showInterviewModal, setShowInterviewModal] = useState(false)
   const [interviewNotes, setInterviewNotes] = useState("")
@@ -75,13 +83,26 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(new Set())
   const [showBulkInterviewModal, setShowBulkInterviewModal] = useState(false)
   const [bulkSelectingForInterview, setBulkSelectingForInterview] = useState(false)
-  const [showScheduleModal, setShowScheduleModal] = useState(false)
-  const [showBulkScheduleModal, setShowBulkScheduleModal] = useState(false)
-  const [scheduledDateTime, setScheduledDateTime] = useState("")
-  const [isSchedulingInterview, setIsSchedulingInterview] = useState(false)
-  const [isBulkSchedulingInterview, setIsBulkSchedulingInterview] = useState(false)
+  const [showApprovalModal, setShowApprovalModal] = useState(false)
+  const [showBulkApprovalModal, setShowBulkApprovalModal] = useState(false)
+  const [isApprovingCandidate, setIsApprovingCandidate] = useState(false)
+  const [isBulkApprovingCandidates, setIsBulkApprovingCandidates] = useState(false)
   const [ranking, setRanking] = useState<any>({})
   const [resendingInvitation, setResendingInvitation] = useState<string | null>(null)
+  const [isSchedulingInterview, setIsSchedulingInterview] = useState(false)
+  const [scheduledDateTime, setScheduledDateTime] = useState<string | null>(null)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [isBulkSchedulingInterview, setIsBulkSchedulingInterview] = useState(false)
+  const [showBulkScheduleModal, setShowBulkScheduleModal] = useState(false)
+  const [isRejectingCandidate, setIsRejectingCandidate] = useState(false)
+  const [showRejectionModal, setShowRejectionModal] = useState(false)
+  const [selectedApplicationForRejection, setSelectedApplicationForRejection] = useState<Application | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showBulkRejectionModal, setShowBulkRejectionModal] = useState(false)
+  const [isBulkRejectingCandidates, setIsBulkRejectingCandidates] = useState(false)
+  const [rejectionNotes, setRejectionNotes] = useState("")
 
   useEffect(() => {
     fetchApplications()
@@ -125,6 +146,219 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
       onNotification("Error loading applications", "error")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteApplication = async (application: Application) => {
+    setApplicationToDelete(application)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!applicationToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/applications/${applicationToDelete.id}/delete`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        // Remove the application from the local state
+        setApplications((prev) => prev.filter((app) => app.id !== applicationToDelete.id))
+        setShowDeleteModal(false)
+        setApplicationToDelete(null)
+      } else {
+        console.error("Failed to delete application")
+      }
+    } catch (error) {
+      console.error("Error deleting application:", error)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleApproveCandidate = async (applicationId: string) => {
+    console.log("[v0] Starting candidate approval for application:", applicationId)
+    setIsApprovingCandidate(true)
+
+    try {
+      const response = await fetch(`/api/applications/${applicationId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notes: interviewNotes.trim() || null,
+        }),
+      })
+
+      const result = await response.json()
+      console.log("[v0] Approval response:", result)
+
+      if (response.ok) {
+        if (result.emailError) {
+          onNotification(result.message, "info")
+        } else {
+          onNotification("Candidate approved and congratulations email sent!", "success")
+        }
+
+        // Refresh applications to show updated status
+        fetchApplications()
+        setShowApprovalModal(false)
+        setInterviewNotes("")
+        setSelectedApplicationForInterview(null)
+      } else {
+        onNotification(result.error || "Failed to approve candidate", "error")
+      }
+    } catch (error) {
+      console.error("Error approving candidate:", error)
+      onNotification("Error occurred while approving candidate", "error")
+    } finally {
+      setIsApprovingCandidate(false)
+    }
+  }
+
+  const handleRejectCandidate = async (applicationId: string) => {
+    console.log("[v0] Starting candidate rejection for application:", applicationId)
+    setIsRejectingCandidate(true)
+
+    try {
+      const response = await fetch(`/api/applications/${applicationId}/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notes: interviewNotes.trim() || null,
+        }),
+      })
+
+      const result = await response.json()
+      console.log("[v0] Rejection response:", result)
+
+      if (response.ok) {
+        if (result.emailError) {
+          onNotification(result.message, "info")
+        } else {
+          onNotification("Candidate rejected and notification email sent!", "success")
+        }
+
+        // Refresh applications to show updated status
+        fetchApplications()
+        setShowRejectionModal(false)
+        setInterviewNotes("")
+        setSelectedApplicationForRejection(null)
+      } else {
+        onNotification(result.error || "Failed to reject candidate", "error")
+      }
+    } catch (error) {
+      console.error("Error rejecting candidate:", error)
+      onNotification("Error occurred while rejecting candidate", "error")
+    } finally {
+      setIsRejectingCandidate(false)
+    }
+  }
+
+  const handleBulkApproveCandidate = async () => {
+    setIsBulkApprovingCandidates(true)
+
+    try {
+      const selectedApplications = Array.from(selectedCandidates)
+      const results = await Promise.allSettled(
+        selectedApplications.map(async (applicationId) => {
+          const response = await fetch(`/api/applications/${applicationId}/approve`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              notes: interviewNotes.trim() || null,
+            }),
+          })
+
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.error || "Failed to approve candidate")
+          }
+
+          return await response.json()
+        }),
+      )
+
+      const successful = results.filter((result) => result.status === "fulfilled").length
+      const failed = results.filter((result) => result.status === "rejected").length
+
+      if (successful > 0) {
+        onNotification(
+          `Successfully approved ${successful} candidate${successful > 1 ? "s" : ""}${failed > 0 ? ` (${failed} failed)` : ""}`,
+          failed > 0 ? "info" : "success",
+        )
+      } else {
+        onNotification("Failed to approve candidates", "error")
+      }
+
+      // Refresh applications and reset selection
+      fetchApplications()
+      setShowBulkApprovalModal(false)
+      setInterviewNotes("")
+      setSelectedCandidates(new Set())
+    } catch (error) {
+      console.error("Error in bulk approval:", error)
+      onNotification("Error occurred during bulk approval", "error")
+    } finally {
+      setIsBulkApprovingCandidates(false)
+    }
+  }
+
+  const handleBulkRejectCandidate = async () => {
+    setIsBulkRejectingCandidates(true)
+
+    try {
+      const selectedApplications = Array.from(selectedCandidates)
+      const results = await Promise.allSettled(
+        selectedApplications.map(async (applicationId) => {
+          const response = await fetch(`/api/applications/${applicationId}/reject`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              notes: rejectionNotes.trim() || null,
+            }),
+          })
+
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.error || "Failed to reject candidate")
+          }
+
+          return await response.json()
+        }),
+      )
+
+      const successful = results.filter((result) => result.status === "fulfilled").length
+      const failed = results.filter((result) => result.status === "rejected").length
+
+      if (successful > 0) {
+        onNotification(
+          `Successfully rejected ${successful} candidate${successful > 1 ? "s" : ""}${failed > 0 ? ` (${failed} failed)` : ""}`,
+          failed > 0 ? "info" : "success",
+        )
+      } else {
+        onNotification("Failed to reject candidates", "error")
+      }
+
+      // Refresh applications and reset selection
+      fetchApplications()
+      setShowBulkRejectionModal(false)
+      setRejectionNotes("")
+      setSelectedCandidates(new Set())
+    } catch (error) {
+      console.error("Error in bulk rejection:", error)
+      onNotification("Error occurred during bulk rejection", "error")
+    } finally {
+      setIsBulkRejectingCandidates(false)
     }
   }
 
@@ -344,13 +578,57 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
     }
   }
 
-  const filteredApplications = applications.filter((app) => {
-    if (filterStatus === "all") return true
-    if (filterStatus === "scored") return app.total_score && app.total_score > 0
-    if (filterStatus === "pending") return !app.total_score || app.total_score <= 0
-    if (filterStatus === "selected") return app.selected_for_interview
-    return app.status === filterStatus
-  })
+  const filteredApplications = useMemo(() => {
+    const filtered = applications.filter((app) => {
+      // Status filter
+      if (filterStatus === "scored" && (!app.total_score || app.total_score <= 0)) return false
+      if (filterStatus === "pending" && app.total_score && app.total_score > 0) return false
+      if (filterStatus === "selected" && !app.selected_for_interview) return false
+      if (filterStatus === "approved" && app.status !== "approved") return false
+      if (filterStatus === "rejected" && app.status !== "rejected") return false
+
+      // Score range filter
+      if (app.total_score && (app.total_score < scoreRange[0] || app.total_score > scoreRange[1])) return false
+
+      // Search query filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase()
+        return (
+          app.applicant_name.toLowerCase().includes(query) ||
+          app.applicant_email.toLowerCase().includes(query) ||
+          app.applicant_city?.toLowerCase().includes(query)
+        )
+      }
+
+      return true
+    })
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "rank":
+          return (a.rank || 999) - (b.rank || 999)
+        case "score-high":
+          return (b.total_score || 0) - (a.total_score || 0)
+        case "score-low":
+          return (a.total_score || 0) - (b.total_score || 0)
+        case "name-az":
+          return a.applicant_name.localeCompare(b.applicant_name)
+        case "name-za":
+          return b.applicant_name.localeCompare(a.applicant_name)
+        case "newest":
+          return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+        case "oldest":
+          return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
+        case "city-az":
+          return (a.applicant_city || "").localeCompare(b.applicant_city || "")
+        case "city-za":
+          return (b.applicant_city || "").localeCompare(a.applicant_city || "")
+        default:
+          return 0
+      }
+    })
+  }, [applications, filterStatus, sortBy, searchQuery, scoreRange])
 
   const eligibleForSelection = filteredApplications.filter(
     (app) => !app.selected_for_interview && app.total_score && app.total_score > 0,
@@ -497,18 +775,32 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 >
                   {selectedApplication.total_score}%
                 </div>
-                {!selectedApplication.selected_for_interview && (
-                  <button
-                    onClick={() => {
-                      setSelectedApplicationForInterview(selectedApplication)
-                      setShowInterviewModal(true)
-                    }}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                  >
-                    <UserCheck className="h-4 w-4" />
-                    <span>Select for Interview</span>
-                  </button>
-                )}
+                {!selectedApplication.selected_for_interview &&
+                  selectedApplication.status !== "rejected" &&
+                  selectedApplication.status !== "approved" && (
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          setSelectedApplicationForRejection(selectedApplication)
+                          setShowRejectionModal(true)
+                        }}
+                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      >
+                        <UserX className="h-4 w-4" />
+                        <span>Reject</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedApplicationForInterview(selectedApplication)
+                          setShowApprovalModal(true)
+                        }}
+                        className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      >
+                        <UserCheck className="h-4 w-4" />
+                        <span>Approve</span>
+                      </button>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -1046,11 +1338,18 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-primary font-medium">{selectedCandidates.size} selected</span>
                         <button
-                          onClick={() => setShowBulkInterviewModal(true)}
-                          className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 text-sm"
+                          onClick={() => setShowBulkApprovalModal(true)}
+                          className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 text-sm"
                         >
-                          <Video className="h-3 w-3" />
-                          <span>Schedule Interviews</span>
+                          <UserCheck className="h-3 w-3" />
+                          <span>Approve Selected</span>
+                        </button>
+                        <button
+                          onClick={() => setShowBulkRejectionModal(true)}
+                          className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105 text-sm"
+                        >
+                          <UserX className="h-3 w-3" />
+                          <span>Reject Selected</span>
                         </button>
                         <button
                           onClick={() => setSelectedCandidates(new Set())}
@@ -1153,18 +1452,41 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                         <p className="text-xs text-muted-foreground mt-1 capitalize">{displayStatus}</p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {!application.selected_for_interview && hasRealScore && (
-                          <button
-                            onClick={() => {
-                              setSelectedApplicationForInterview(application)
-                              setShowScheduleModal(true)
-                            }}
-                            className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 hover:scale-105 text-sm"
-                          >
-                            <Video className="h-3 w-3" />
-                            <span>Schedule Interview</span>
-                          </button>
-                        )}
+                        {!application.selected_for_interview &&
+                          hasRealScore &&
+                          application.status !== "rejected" &&
+                          application.status !== "approved" && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setSelectedApplicationForRejection(application)
+                                  setShowRejectionModal(true)
+                                }}
+                                className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105 text-sm"
+                              >
+                                <UserX className="h-3 w-3" />
+                                <span>Reject</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedApplicationForInterview(application)
+                                  setShowApprovalModal(true)
+                                }}
+                                className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 text-sm"
+                              >
+                                <UserCheck className="h-3 w-3" />
+                                <span>Approved</span>
+                              </button>
+                            </>
+                          )}
+                        <button
+                          onClick={() => handleDeleteApplication(application)}
+                          className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105 text-sm"
+                          title="Delete application"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Delete</span>
+                        </button>
                         <button
                           onClick={() => setSelectedApplication(application)}
                           className="flex items-center space-x-2 px-3 py-2 text-primary hover:bg-primary/10 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-md"
@@ -1182,7 +1504,7 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
         </div>
       </div>
 
-      {showBulkInterviewModal && selectedCandidates.size > 0 && (
+      {showBulkApprovalModal && selectedCandidates.size > 0 && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div className="bg-card rounded-lg border border-border p-6 max-w-lg w-full mx-4 animate-scale-in">
             <div className="flex items-center space-x-3 mb-4">
@@ -1190,7 +1512,7 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 <UserCheck className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Select Multiple for Interview</h3>
+                <h3 className="text-lg font-semibold text-foreground">Approve Multiple Candidates</h3>
                 <p className="text-sm text-muted-foreground">
                   {selectedCandidates.size} candidate{selectedCandidates.size > 1 ? "s" : ""} selected
                 </p>
@@ -1213,11 +1535,11 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
               </div>
 
               <div className="bg-card/50 rounded-lg p-4 border border-border/50">
-                <label htmlFor="bulkInterviewNotes" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="bulkApprovalNotes" className="block text-sm font-medium text-foreground mb-2">
                   HR Notes (will be applied to all selected candidates)
                 </label>
                 <textarea
-                  id="bulkInterviewNotes"
+                  id="bulkApprovalNotes"
                   value={interviewNotes}
                   onChange={(e) => setInterviewNotes(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
@@ -1229,26 +1551,26 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
               <div className="flex items-center justify-end space-x-3">
                 <button
                   onClick={() => {
-                    setShowBulkInterviewModal(false)
+                    setShowBulkApprovalModal(false)
                     setInterviewNotes("")
                   }}
-                  disabled={bulkSelectingForInterview}
+                  disabled={isBulkApprovingCandidates}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
                 >
                   Cancel
                 </button>
                 <Button
-                  onClick={() => handleBulkSelectForInterview()}
-                  disabled={bulkSelectingForInterview}
+                  onClick={() => handleBulkApproveCandidate()}
+                  disabled={isBulkApprovingCandidates}
                   className="w-full"
                 >
-                  {bulkSelectingForInterview ? (
+                  {isBulkApprovingCandidates ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Selecting...
+                      Approving...
                     </>
                   ) : (
-                    "Select & Send Emails"
+                    "Approve & Send Emails"
                   )}
                 </Button>
               </div>
@@ -1257,144 +1579,15 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
         </div>
       )}
 
-      {showInterviewModal && selectedApplicationForInterview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-card rounded-lg border border-border p-6 max-w-md w-full mx-4 animate-scale-in">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <UserCheck className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Select for Interview</h3>
-                <p className="text-sm text-muted-foreground">{selectedApplicationForInterview.applicant_name}</p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="bg-card/50 rounded-lg p-4 border border-border/50">
-                <label htmlFor="interviewNotes" className="block text-sm font-medium text-foreground mb-2">
-                  HR Notes
-                </label>
-                <textarea
-                  id="interviewNotes"
-                  value={interviewNotes}
-                  onChange={(e) => setInterviewNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
-                  rows={4}
-                ></textarea>
-              </div>
-              <div className="flex items-center justify-end space-x-3">
-                <button
-                  onClick={() => setShowInterviewModal(false)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleSelectForInterview(selectedApplicationForInterview.id)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105"
-                >
-                  Select
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showScheduleModal && selectedApplicationForInterview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-card rounded-lg border border-border p-6 max-w-md w-full mx-4 animate-scale-in">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Video className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Schedule Interview</h3>
-                <p className="text-sm text-muted-foreground">{selectedApplicationForInterview.applicant_name}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-card/50 rounded-lg p-4 border border-border/50">
-                <label htmlFor="scheduleDateTime" className="block text-sm font-medium text-foreground mb-2">
-                  <CalendarDays className="h-4 w-4 inline mr-1" />
-                  Interview Date & Time
-                </label>
-                <input
-                  type="datetime-local"
-                  id="scheduleDateTime"
-                  value={scheduledDateTime}
-                  onChange={(e) => setScheduledDateTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Leave empty for ASAP scheduling</p>
-              </div>
-
-              <div className="bg-card/50 rounded-lg p-4 border border-border/50">
-                <label htmlFor="interviewNotes" className="block text-sm font-medium text-foreground mb-2">
-                  HR Notes
-                </label>
-                <textarea
-                  id="interviewNotes"
-                  value={interviewNotes}
-                  onChange={(e) => setInterviewNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
-                  rows={3}
-                  placeholder="Optional notes for the candidate..."
-                />
-              </div>
-
-              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <Video className="h-4 w-4 inline mr-1" />A unique video call link will be generated and sent to the
-                  candidate. HR can join anytime, candidates only at scheduled time.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowScheduleModal(false)
-                    setScheduledDateTime("")
-                    setInterviewNotes("")
-                  }}
-                  disabled={isSchedulingInterview}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleScheduleInterview(selectedApplicationForInterview.id)}
-                  disabled={isSchedulingInterview}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
-                >
-                  {isSchedulingInterview ? (
-                    <>
-                      <Clock className="h-4 w-4 animate-spin" />
-                      <span>Scheduling...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Video className="h-4 w-4" />
-                      <span>Schedule & Send Invite</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showBulkScheduleModal && selectedCandidates.size > 0 && (
+      {showBulkRejectionModal && selectedCandidates.size > 0 && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div className="bg-card rounded-lg border border-border p-6 max-w-lg w-full mx-4 animate-scale-in">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Video className="h-5 w-5 text-blue-600" />
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <UserX className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Schedule Multiple Interviews</h3>
+                <h3 className="text-lg font-semibold text-foreground">Reject Multiple Candidates</h3>
                 <p className="text-sm text-muted-foreground">
                   {selectedCandidates.size} candidate{selectedCandidates.size > 1 ? "s" : ""} selected
                 </p>
@@ -1417,70 +1610,100 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
               </div>
 
               <div className="bg-card/50 rounded-lg p-4 border border-border/50">
-                <label htmlFor="bulkScheduleDateTime" className="block text-sm font-medium text-foreground mb-2">
-                  <CalendarDays className="h-4 w-4 inline mr-1" />
-                  Interview Date & Time (for all candidates)
-                </label>
-                <input
-                  type="datetime-local"
-                  id="bulkScheduleDateTime"
-                  value={scheduledDateTime}
-                  onChange={(e) => setScheduledDateTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Leave empty for ASAP scheduling. Each candidate gets a unique meeting link.
-                </p>
-              </div>
-
-              <div className="bg-card/50 rounded-lg p-4 border border-border/50">
-                <label htmlFor="bulkInterviewNotes" className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="bulkRejectionNotes" className="block text-sm font-medium text-foreground mb-2">
                   HR Notes (will be applied to all selected candidates)
                 </label>
                 <textarea
-                  id="bulkInterviewNotes"
-                  value={interviewNotes}
-                  onChange={(e) => setInterviewNotes(e.target.value)}
+                  id="bulkRejectionNotes"
+                  value={rejectionNotes}
+                  onChange={(e) => setRejectionNotes(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
                   rows={3}
                   placeholder="Optional notes for all selected candidates..."
                 />
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <Video className="h-4 w-4 inline mr-1" />
-                  Each candidate will receive a unique video call link. HR can join any meeting anytime, candidates only
-                  at their scheduled time.
-                </p>
-              </div>
-
               <div className="flex items-center justify-end space-x-3">
                 <button
                   onClick={() => {
-                    setShowBulkScheduleModal(false)
-                    setScheduledDateTime("")
-                    setInterviewNotes("")
+                    setShowBulkRejectionModal(false)
+                    setRejectionNotes("")
                   }}
-                  disabled={isBulkSchedulingInterview}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
+                  disabled={isBulkRejectingCandidates}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
+                >
+                  Cancel
+                </button>
+                <Button
+                  onClick={() => handleBulkRejectCandidate()}
+                  disabled={isBulkRejectingCandidates}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all duration-200 hover:scale-105 flex items-center space-x-2"
+                >
+                  {isBulkRejectingCandidates ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Rejecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Reject All</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showApprovalModal && selectedApplicationForInterview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-card rounded-lg border border-border p-6 max-w-md w-full mx-4 animate-scale-in">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <UserCheck className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Approve Candidate</h3>
+                <p className="text-sm text-muted-foreground">{selectedApplicationForInterview.applicant_name}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-card/50 rounded-lg p-4 border border-border/50">
+                <label htmlFor="approvalNotes" className="block text-sm font-medium text-foreground mb-2">
+                  HR Notes
+                </label>
+                <textarea
+                  id="approvalNotes"
+                  value={interviewNotes}
+                  onChange={(e) => setInterviewNotes(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                  rows={4}
+                  placeholder="Optional notes for the candidate..."
+                />
+              </div>
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setShowApprovalModal(false)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleBulkScheduleInterview}
-                  disabled={isBulkSchedulingInterview}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
+                  onClick={() => handleApproveCandidate(selectedApplicationForInterview.id)}
+                  disabled={isApprovingCandidate}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
                 >
-                  {isBulkSchedulingInterview ? (
+                  {isApprovingCandidate ? (
                     <>
-                      <Clock className="h-4 w-4 animate-spin" />
-                      <span>Scheduling...</span>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Approving...</span>
                     </>
                   ) : (
                     <>
-                      <Video className="h-4 w-4" />
-                      <span>Schedule All & Send Invites</span>
+                      <UserCheck className="h-4 w-4" />
+                      <span>Approve</span>
                     </>
                   )}
                 </button>
@@ -1489,6 +1712,218 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
           </div>
         </div>
       )}
+      {showRejectionModal && selectedApplicationForRejection && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-card rounded-lg border border-border p-6 max-w-md w-full mx-4 animate-scale-in">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <UserX className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Reject Candidate</h3>
+                <p className="text-sm text-muted-foreground">{selectedApplicationForRejection.applicant_name}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-card/50 rounded-lg p-4 border border-border/50">
+                <label htmlFor="rejectionNotes" className="block text-sm font-medium text-foreground mb-2">
+                  HR Notes
+                </label>
+                <textarea
+                  id="rejectionNotes"
+                  value={interviewNotes}
+                  onChange={(e) => setInterviewNotes(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                  rows={4}
+                  placeholder="Optional notes for the rejection..."
+                />
+              </div>
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowRejectionModal(false)
+                    setInterviewNotes("")
+                    setSelectedApplicationForRejection(null)
+                  }}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 hover:scale-105"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRejectCandidate(selectedApplicationForRejection.id)}
+                  disabled={isRejectingCandidate}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
+                >
+                  {isRejectingCandidate ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Rejecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Reject & Send Email</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteModal && applicationToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-card rounded-lg border border-border p-6 max-w-md w-full mx-4 animate-scale-in">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Delete Application</h3>
+                <p className="text-sm text-muted-foreground">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm text-foreground">
+                Are you sure you want to delete the application from{" "}
+                <span className="font-semibold">{applicationToDelete.applicant_name}</span>?
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                This will permanently remove all application data, files, and scores.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setApplicationToDelete(null)
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-card/50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="mb-6 space-y-4">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search by name, email, or city..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Filter Controls */}
+        <div className="flex flex-wrap gap-4">
+          {/* Status Filter */}
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="scored">Scored</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="selected">Selected</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Sort Options */}
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="rank">Rank (Best First)</SelectItem>
+              <SelectItem value="score-high">Score (High to Low)</SelectItem>
+              <SelectItem value="score-low">Score (Low to High)</SelectItem>
+              <SelectItem value="name-az">Name (A-Z)</SelectItem>
+              <SelectItem value="name-za">Name (Z-A)</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="city-az">City (A-Z)</SelectItem>
+              <SelectItem value="city-za">City (Z-A)</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Score Range Filter */}
+          <div className="flex items-center gap-2">
+            <Label className="text-sm whitespace-nowrap">Score Range:</Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={scoreRange[0]}
+              onChange={(e) => setScoreRange([Number.parseInt(e.target.value) || 0, scoreRange[1]])}
+              className="w-20"
+              placeholder="Min"
+            />
+            <span className="text-gray-400">-</span>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={scoreRange[1]}
+              onChange={(e) => setScoreRange([scoreRange[0], Number.parseInt(e.target.value) || 100])}
+              className="w-20"
+              placeholder="Max"
+            />
+          </div>
+
+          {/* Clear Filters Button */}
+          {(filterStatus !== "all" ||
+            sortBy !== "rank" ||
+            searchQuery.trim() ||
+            scoreRange[0] !== 0 ||
+            scoreRange[1] !== 100) && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setFilterStatus("all")
+                setSortBy("rank")
+                setSearchQuery("")
+                setScoreRange([0, 100])
+              }}
+              className="flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              Clear Filters
+            </Button>
+          )}
+        </div>
+
+        {/* Results Count */}
+        <div className="text-sm text-gray-600">
+          Showing {filteredApplications.length} of {applications.length} applications
+        </div>
+      </div>
     </div>
   )
 }

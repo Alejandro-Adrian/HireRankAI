@@ -147,27 +147,31 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Reset Password</h2>
-        <p className="text-gray-600">Enter your email to receive a reset code</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Reset Password</h2>
+        <p className="text-gray-600 dark:text-gray-300">Enter your email to receive a reset code</p>
       </div>
 
       {step === "email" && (
         <form onSubmit={handleSendCode} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {error && (
+            <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -182,19 +186,27 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
       {step === "verify" && (
         <form onSubmit={handleVerifyCode} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Verification Code</label>
             <input
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter 6-digit code"
               required
             />
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          {message && <div className="text-green-600 text-sm">{message}</div>}
+          {error && (
+            <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+              {error}
+            </div>
+          )}
+          {message && (
+            <div className="text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+              {message}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -209,7 +221,7 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
               type="button"
               onClick={handleResendResetCode}
               disabled={resendLoading || resendCooldown > 0}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resendLoading
                 ? "Sending..."
@@ -224,20 +236,20 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
       {step === "reset" && (
         <form onSubmit={handleResetPassword} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">New Password</label>
             <div className="relative">
               <input
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
-                className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 {showNewPassword ? (
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -269,20 +281,22 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Confirm New Password
+            </label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 {showConfirmPassword ? (
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,8 +327,16 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
             </div>
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          {message && <div className="text-green-600 text-sm">{message}</div>}
+          {error && (
+            <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+              {error}
+            </div>
+          )}
+          {message && (
+            <div className="text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+              {message}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -327,7 +349,10 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
       )}
 
       <div className="mt-6 text-center">
-        <button onClick={onSwitchToLogin} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+        <button
+          onClick={onSwitchToLogin}
+          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
+        >
           Back to Sign In
         </button>
       </div>

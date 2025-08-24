@@ -1,4 +1,4 @@
--- HireRank AI - Complete Database Setup Script
+-- HireRankerAI - Complete Database Setup Script
 -- This script resets and recreates the entire database schema
 -- Safe to run on fresh deployments or to reset existing databases
 

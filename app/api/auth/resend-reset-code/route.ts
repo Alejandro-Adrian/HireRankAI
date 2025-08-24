@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Send password reset email
     const emailResult = await sendEmail({
       to: email,
-      subject: "Password Reset Code - HireRank AI",
+      subject: "Password Reset Code - HireRankerAI",
       html: createPasswordResetEmailHTML(resetCode),
     })
 

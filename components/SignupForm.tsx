@@ -129,22 +129,24 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Get Started</h2>
-        <p className="text-gray-600">Join thousands of HR professionals using HireRank AI</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Get Started</h2>
+        <p className="text-gray-600 dark:text-gray-300">Join thousands of HR professionals using HireRankerAI</p>
       </div>
 
       {/* Tab Toggle */}
-      <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+      <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-6">
         <button
           onClick={() => {
             setActiveTab("signin")
             onSwitchToLogin()
           }}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "signin" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
+            activeTab === "signin"
+              ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+              : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
           Sign In
@@ -152,7 +154,9 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         <button
           onClick={() => setActiveTab("signup")}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "signup" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
+            activeTab === "signup"
+              ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+              : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
           Sign Up
@@ -163,68 +167,68 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First Name</label>
               <input
                 type="text"
                 value={firstname}
                 onChange={(e) => setFirstname(e.target.value)}
                 placeholder="Enter your first name"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
               <input
                 type="text"
                 value={lastname}
                 onChange={(e) => setLastname(e.target.value)}
                 placeholder="Enter your last name"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Company</label>
             <input
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="Enter your company name"
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 {showPassword ? (
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -256,20 +260,20 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
-                className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 {showConfirmPassword ? (
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -300,7 +304,11 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </div>
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {error && (
+            <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -313,19 +321,27 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       ) : (
         <form onSubmit={handleVerify} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Verification Code</label>
             <input
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter 6-digit code"
               required
             />
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          {message && <div className="text-green-600 text-sm">{message}</div>}
+          {error && (
+            <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+              {error}
+            </div>
+          )}
+          {message && (
+            <div className="text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+              {message}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -340,7 +356,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               type="button"
               onClick={handleResendCode}
               disabled={resendLoading || resendCooldown > 0}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resendLoading
                 ? "Sending..."
