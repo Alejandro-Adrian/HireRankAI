@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sendEmail, generateVerificationCode, createVerificationEmailHTML } from "@/lib/email"
-import { updateUser, getUserByEmail } from "@/lib/storage"
+import { storeVerificationCode, getUserByEmail } from "@/lib/storage"
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,19 +16,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    if (user.verified) {
+    if (user.is_verified) {
       return NextResponse.json({ error: "User is already verified" }, { status: 400 })
     }
 
     // Generate new verification code
     const verificationCode = generateVerificationCode()
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
 
-    // Update user with new verification code
-    await updateUser(email, {
-      verificationCode,
-      verificationExpires: expiresAt,
-    })
+    const codeStored = await storeVerificationCode(email, verificationCode, "verification")
+
+    if (!codeStored) {
+      return NextResponse.json({ error: "Failed to store verification code" }, { status: 500 })
+    }
 
     // Send verification email
     const emailResult = await sendEmail({

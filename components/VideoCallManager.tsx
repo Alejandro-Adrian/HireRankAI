@@ -189,10 +189,9 @@ export default function VideoCallManager({ rankings, onBack, onNotification, use
 
       if (response.ok) {
         onNotification("Session deleted successfully!", "success")
-        fetchSessions() // Refresh the sessions list
+        fetchSessions()
       } else {
-        const errorData = await response.json()
-        onNotification(errorData.error || "Failed to delete session", "error")
+        onNotification("Failed to delete session", "error")
       }
     } catch (error) {
       console.error("Error deleting session:", error)
