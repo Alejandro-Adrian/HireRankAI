@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { ArrowLeft, Save, Link2, MapPin, Sliders } from "lucide-react"
+import { ArrowLeft, Save, Link2, MapPin, Sliders, CheckCircle, Sparkles } from "lucide-react"
 
 interface Criterion {
   id: string
@@ -174,42 +174,74 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-950 relative overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
+        <div
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-300/10 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: "2s" }}
+        ></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-400/5 rounded-full blur-2xl animate-pulse-slow"></div>
+      </div>
+
+      <header className="relative z-10 glass-emerald border-b border-emerald-200/20 dark:border-emerald-800/20 animate-fade-in-down">
+        <div className="px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-4 animate-slide-in-right">
               <button
                 onClick={onBack}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center space-x-2 p-3 glass-emerald hover-glow rounded-xl transition-all duration-300 group"
               >
-                <ArrowLeft className="h-5 w-5" />
-                <span>Back to Dashboard</span>
+                <ArrowLeft className="h-5 w-5 text-emerald-600 dark:text-emerald-400 group-hover:-translate-x-1 transition-transform duration-200" />
+                <span className="text-emerald-700 dark:text-emerald-300 font-medium font-work-sans hidden sm:block">
+                  Back to Dashboard
+                </span>
               </button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-2xl font-bold text-gray-900">{ranking ? "Edit Ranking" : "Create New Ranking"}</h1>
+              <div className="h-8 w-px bg-emerald-200/50 dark:bg-emerald-800/50 hidden sm:block"></div>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg animate-bounce-gentle">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold gradient-text font-work-sans">
+                    {ranking ? "Edit Ranking" : "Create New Ranking"}
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-open-sans hidden sm:block">
+                    Design your perfect hiring criteria
+                  </p>
+                </div>
+              </div>
             </div>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-xl ripple-effect font-work-sans font-semibold animate-slide-in-left"
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-5 w-5" />
               <span>{saving ? "Saving..." : "Save Ranking"}</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="space-y-8">
-          {/* Basic Information */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="relative z-10 p-4 sm:p-6 max-w-6xl mx-auto">
+        <div className="space-y-6 sm:space-y-8">
+          <div
+            className="glass rounded-2xl border border-emerald-200/20 dark:border-emerald-800/20 p-6 sm:p-8 animate-fade-in-up"
+            style={{ animationDelay: "0.1s" }}
+          >
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-sm">1</span>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white font-work-sans">Basic Information</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-semibold text-slate-700 dark:text-slate-300 font-work-sans"
+                >
                   Ranking Title *
                 </label>
                 <input
@@ -218,18 +250,21 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Restaurant Server Position - Downtown Location"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-4 bg-white/50 dark:bg-slate-800/50 border-2 border-emerald-200/50 dark:border-emerald-800/50 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-600 font-open-sans"
                 />
               </div>
-              <div>
-                <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label
+                  htmlFor="position"
+                  className="block text-sm font-semibold text-slate-700 dark:text-slate-300 font-work-sans"
+                >
                   Job Position *
                 </label>
                 <select
                   id="position"
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-4 bg-white/50 dark:bg-slate-800/50 border-2 border-emerald-200/50 dark:border-emerald-800/50 rounded-2xl text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-600 font-open-sans"
                 >
                   <option value="">Select a position</option>
                   {JOB_POSITIONS.map((pos) => (
@@ -240,51 +275,69 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                 </select>
               </div>
             </div>
-            <div className="mt-6">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="mt-6 space-y-2">
+              <label
+                htmlFor="description"
+                className="block text-sm font-semibold text-slate-700 dark:text-slate-300 font-work-sans"
+              >
                 Description
               </label>
               <textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={3}
+                rows={4}
                 placeholder="Describe the role, requirements, and what you're looking for in candidates..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-4 bg-white/50 dark:bg-slate-800/50 border-2 border-emerald-200/50 dark:border-emerald-800/50 rounded-2xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-600 font-open-sans resize-none"
               />
             </div>
-            <div className="mt-6 flex items-center">
+            <div className="mt-6 flex items-center space-x-3">
               <input
                 type="checkbox"
                 id="isActive"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-2 border-emerald-300 rounded-lg transition-all duration-200"
               />
-              <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+              <label
+                htmlFor="isActive"
+                className="text-sm font-medium text-slate-700 dark:text-slate-300 font-work-sans"
+              >
                 Active (accepting applications)
               </label>
             </div>
           </div>
 
-          {/* Evaluation Criteria */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Evaluation Criteria</h2>
-            <p className="text-sm text-gray-600 mb-6">
-              Select the criteria you want to evaluate candidates on and adjust their importance using the sliders.
-            </p>
+          <div
+            className="glass rounded-2xl border border-emerald-200/20 dark:border-emerald-800/20 p-6 sm:p-8 animate-fade-in-up"
+            style={{ animationDelay: "0.2s" }}
+          >
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-sm">2</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white font-work-sans">Evaluation Criteria</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-open-sans">
+                  Select criteria and adjust their importance using the sliders
+                </p>
+              </div>
+            </div>
 
             <div className="space-y-4">
-              {DEFAULT_CRITERIA.map((criterion) => {
+              {DEFAULT_CRITERIA.map((criterion, index) => {
                 const isSelected = selectedCriteria.includes(criterion.id)
                 const weight = criteriaWeights[criterion.id] || criterion.weight
 
                 return (
                   <div
                     key={criterion.id}
-                    className={`border rounded-lg p-4 transition-colors ${
-                      isSelected ? "border-blue-200 bg-blue-50" : "border-gray-200 bg-gray-50"
+                    className={`border-2 rounded-2xl p-6 transition-all duration-300 animate-fade-in-up ${
+                      isSelected
+                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/20 shadow-lg"
+                        : "border-slate-200 dark:border-slate-700 bg-white/30 dark:bg-slate-800/30 hover:border-emerald-200 dark:hover:border-emerald-800"
                     }`}
+                    style={{ animationDelay: `${0.3 + index * 0.05}s` }}
                   >
                     <div className="flex items-start space-x-4">
                       <input
@@ -292,23 +345,28 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                         id={criterion.id}
                         checked={isSelected}
                         onChange={() => handleCriterionToggle(criterion.id)}
-                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mt-1 h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-2 border-emerald-300 rounded-lg transition-all duration-200"
                       />
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
                           <div>
-                            <label htmlFor={criterion.id} className="text-sm font-medium text-gray-900 cursor-pointer">
+                            <label
+                              htmlFor={criterion.id}
+                              className="text-lg font-bold text-slate-900 dark:text-white cursor-pointer font-work-sans flex items-center"
+                            >
                               {criterion.name}
                               {criterion.id === "area_living" && (
-                                <MapPin className="inline h-4 w-4 ml-1 text-gray-500" />
+                                <MapPin className="inline h-5 w-5 ml-2 text-emerald-500 dark:text-emerald-400" />
                               )}
                             </label>
-                            <p className="text-xs text-gray-600">{criterion.description}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 font-open-sans mt-1">
+                              {criterion.description}
+                            </p>
                           </div>
                           {isSelected && (
-                            <div className="flex items-center space-x-2">
-                              <Sliders className="h-4 w-4 text-gray-400" />
-                              <span className={`text-sm font-medium ${getWeightColor(weight)}`}>
+                            <div className="flex items-center space-x-3 glass-emerald rounded-xl px-4 py-2">
+                              <Sliders className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+                              <span className={`text-sm font-bold ${getWeightColor(weight)} font-work-sans`}>
                                 {getWeightLabel(weight)}
                               </span>
                             </div>
@@ -316,8 +374,8 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                         </div>
 
                         {isSelected && (
-                          <div className="space-y-3">
-                            <div>
+                          <div className="space-y-4 animate-slide-in-down">
+                            <div className="relative">
                               <input
                                 type="range"
                                 min="0.1"
@@ -325,9 +383,9 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                                 step="0.1"
                                 value={weight}
                                 onChange={(e) => handleWeightChange(criterion.id, Number.parseFloat(e.target.value))}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                className="w-full h-3 bg-gradient-to-r from-emerald-200 to-emerald-300 dark:from-emerald-800 dark:to-emerald-700 rounded-full appearance-none cursor-pointer slider-emerald"
                               />
-                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2 font-work-sans font-medium">
                                 <span>Low</span>
                                 <span>Medium</span>
                                 <span>High</span>
@@ -336,8 +394,8 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                             </div>
 
                             {criterion.id === "area_living" && (
-                              <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                              <div className="animate-fade-in">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 font-work-sans">
                                   Preferred City (Optional)
                                 </label>
                                 <input
@@ -345,7 +403,7 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                                   value={areaCity}
                                   onChange={(e) => setAreaCity(e.target.value)}
                                   placeholder="e.g., New York, Los Angeles"
-                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-full px-4 py-3 bg-white/50 dark:bg-slate-800/50 border-2 border-emerald-200/50 dark:border-emerald-800/50 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 font-open-sans"
                                 />
                               </div>
                             )}
@@ -359,23 +417,40 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
             </div>
 
             {selectedCriteria.length === 0 && (
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">Please select at least one evaluation criterion.</p>
+              <div className="mt-6 p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl animate-pulse-gentle">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">!</span>
+                  </div>
+                  <p className="text-amber-800 dark:text-amber-200 font-medium font-work-sans">
+                    Please select at least one evaluation criterion.
+                  </p>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Application Link Preview */}
           {(title || ranking) && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Application Link</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Once saved, candidates will use this link to submit their applications.
-              </p>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <Link2 className="h-5 w-5 text-gray-400" />
-                <code className="text-sm text-gray-700 flex-1">
-                  {window.location.origin}/apply/{ranking?.application_link_id || "your-link-id"}
+            <div
+              className="glass rounded-2xl border border-emerald-200/20 dark:border-emerald-800/20 p-6 sm:p-8 animate-fade-in-up"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white font-work-sans">Application Link</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-open-sans">
+                    Share this link with candidates to apply
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 p-4 glass-emerald rounded-2xl">
+                <Link2 className="h-6 w-6 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
+                <code className="text-sm text-slate-700 dark:text-slate-300 flex-1 break-all font-mono bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-xl">
+                  {typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/apply/
+                  {ranking?.application_link_id || "your-link-id"}
                 </code>
                 <button
                   onClick={() => {
@@ -386,9 +461,9 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
                     }
                   }}
                   disabled={!ranking?.application_link_id}
-                  className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 ripple-effect font-work-sans font-semibold"
                 >
-                  Copy
+                  Copy Link
                 </button>
               </div>
             </div>
@@ -397,25 +472,37 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
       </div>
 
       <style jsx>{`
-        .slider::-webkit-slider-thumb {
+        .slider-emerald::-webkit-slider-thumb {
           appearance: none;
-          height: 20px;
-          width: 20px;
+          height: 24px;
+          width: 24px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: linear-gradient(135deg, #10b981, #059669);
           cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          border: 3px solid #ffffff;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+          transition: all 0.2s ease;
         }
 
-        .slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
+        .slider-emerald::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.6);
+        }
+
+        .slider-emerald::-moz-range-thumb {
+          height: 24px;
+          width: 24px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: linear-gradient(135deg, #10b981, #059669);
           cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          border: 3px solid #ffffff;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+          transition: all 0.2s ease;
+        }
+
+        .slider-emerald::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.6);
         }
       `}</style>
     </div>

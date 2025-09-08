@@ -54,21 +54,26 @@ export default function LoginForm({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-scale-in">
-      {/* Header */}
-      <div className="text-center mb-8 animate-fade-in">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Get Started</h2>
-        <p className="text-gray-600 dark:text-gray-300">Join thousands of HR professionals using HireRankerAI</p>
+    <div className="relative animate-scale-in">
+      <div className="text-center mb-8 animate-fade-in-down">
+        <div className="mb-4">
+          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl flex items-center justify-center shadow-lg animate-bounce-gentle">
+            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+        </div>
+        <h2 className="text-3xl font-bold gradient-text mb-3 font-work-sans">Welcome Back</h2>
+        <p className="text-slate-600 dark:text-slate-400 font-open-sans">Sign in to continue your hiring journey</p>
       </div>
 
-      {/* Tab Toggle */}
-      <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-6 animate-slide-in-left">
+      <div className="flex glass-emerald rounded-2xl p-1.5 mb-8 animate-slide-in-left">
         <button
           onClick={() => setActiveTab("signin")}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+          className={`flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all duration-300 font-work-sans ${
             activeTab === "signin"
-              ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-              : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg transform scale-105"
+              : "text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 hover-float"
           }`}
         >
           Sign In
@@ -78,45 +83,49 @@ export default function LoginForm({
             setActiveTab("signup")
             onSwitchToSignup()
           }}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+          className={`flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all duration-300 font-work-sans ${
             activeTab === "signup"
-              ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-              : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg transform scale-105"
+              : "text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 hover-float"
           }`}
         >
           Sign Up
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 animate-slide-in-right">
-        <div className="transform transition-all duration-300 hover:scale-[1.02]">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+      <form onSubmit={handleSubmit} className="space-y-6 animate-slide-in-right">
+        <div className="relative group animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-400 focus:scale-[1.02] focus:shadow-lg"
+            placeholder=" "
+            className="w-full px-4 py-4 bg-white/50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-600 hover-lift peer font-open-sans"
             required
           />
+          <label className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-500 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans">
+            Email Address
+          </label>
         </div>
 
-        <div className="transform transition-all duration-300 hover:scale-[1.02]">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-400 focus:scale-[1.02] focus:shadow-lg"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-200 hover:scale-110"
-            >
+        <div className="relative group animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder=" "
+            className="w-full px-4 py-4 pr-12 bg-white/50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-600 hover-lift peer font-open-sans"
+            required
+          />
+          <label className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-500 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans">
+            Password
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-110 group"
+          >
+            <div className="p-1 rounded-lg group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-colors duration-200">
               {showPassword ? (
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -142,40 +151,67 @@ export default function LoginForm({
                   />
                 </svg>
               )}
-            </button>
-          </div>
+            </div>
+          </button>
         </div>
 
         {error && (
-          <div className="text-red-600 dark:text-red-400 text-sm animate-bounce-gentle bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
-            {error}
+          <div className="animate-bounce-gentle">
+            <div className="flex items-center space-x-3 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-200 dark:border-red-800 shadow-sm">
+              <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <span className="font-medium font-open-sans">{error}</span>
+            </div>
           </div>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 flex items-center justify-center"
+          className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-4 px-6 rounded-2xl font-semibold hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-xl active:scale-95 ripple-effect animate-fade-in-up font-work-sans"
+          style={{ animationDelay: "0.3s" }}
         >
-          {loading ? (
-            <>
-              <div className="loading-spinner mr-2"></div>
-              Signing In...
-            </>
-          ) : (
-            "Sign In"
-          )}
+          <div className="flex items-center justify-center space-x-2">
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In</span>
+                <svg
+                  className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </>
+            )}
+          </div>
         </button>
       </form>
 
-      <div className="mt-6 text-center animate-fade-in">
+      <div className="mt-8 text-center animate-fade-in" style={{ animationDelay: "0.4s" }}>
         <button
           onClick={onSwitchToForgot}
-          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium transition-all duration-200 hover:scale-105"
+          className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-sm font-medium transition-all duration-300 hover:scale-105 hover-float font-work-sans"
         >
           Forgot your password?
         </button>
       </div>
+
+      <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-200/20 rounded-full blur-2xl animate-pulse-slow pointer-events-none"></div>
+      <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-emerald-300/10 rounded-full blur-3xl animate-float pointer-events-none"></div>
     </div>
   )
 }

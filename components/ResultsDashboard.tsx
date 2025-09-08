@@ -5,7 +5,6 @@ import {
   Trophy,
   Users,
   TrendingUp,
-  Eye,
   FileText,
   Award,
   Briefcase,
@@ -14,9 +13,7 @@ import {
   MapPin,
   Calendar,
   BarChart3,
-  RefreshCw,
   Brain,
-  ExternalLink,
   CheckCircle,
   Target,
   Zap,
@@ -528,19 +525,19 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
 
   const getScoreColor = (score: number) => {
     if (score >= 80)
-      return "text-emerald-800 bg-emerald-100 border-emerald-300 dark:text-emerald-300 dark:bg-emerald-950 dark:border-emerald-700"
+      return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/50 dark:border-emerald-800/50"
     if (score >= 60)
-      return "text-blue-800 bg-blue-100 border-blue-300 dark:text-blue-300 dark:bg-blue-950 dark:border-blue-700"
+      return "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/50 dark:border-blue-800/50"
     if (score >= 40)
-      return "text-amber-800 bg-amber-100 border-amber-300 dark:text-amber-300 dark:bg-amber-950 dark:border-amber-700"
-    return "text-rose-800 bg-rose-100 border-rose-300 dark:text-rose-300 dark:bg-rose-950 dark:border-rose-700"
+      return "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/50 dark:border-amber-800/50"
+    return "text-rose-600 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-950/50 dark:border-rose-800/50"
   }
 
   const getRankBadgeColor = (rank: number) => {
-    if (rank === 1) return "bg-chart-1/20 text-chart-1 border-chart-1/30"
-    if (rank <= 3) return "bg-chart-2/20 text-chart-2 border-chart-2/30"
-    if (rank <= 10) return "bg-primary/20 text-primary border-primary/30"
-    return "bg-muted text-muted-foreground border-border"
+    if (rank === 1) return "bg-chart-1/20 text-chart-1 border-chart-1/30 shadow-sm"
+    if (rank <= 3) return "bg-chart-2/20 text-chart-2 border-chart-2/30 shadow-sm"
+    if (rank <= 10) return "bg-primary/20 text-primary border-primary/30 shadow-sm"
+    return "bg-muted text-muted-foreground border-border shadow-sm"
   }
 
   const getDisplayScore = (application: Application) => {
@@ -1200,46 +1197,63 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   }
 
   return (
-    <div className="min-h-screen bg-background animate-fade-in">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-card border-b border-border animate-slide-in-down">
+      <header className="bg-card border-b border-border shadow-sm animate-slide-in-down">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 animate-slide-in-left">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={onBack}
-                className="flex items-center space-x-2 text-foreground hover:text-foreground/80 transition-all duration-200 hover:scale-105"
+                className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-105 hover:bg-muted/50 px-3 py-2 rounded-lg"
               >
                 <ArrowLeft className="h-5 w-5" />
                 <span>Back to Dashboard</span>
               </button>
               <div className="h-6 w-px bg-border"></div>
-              <div className="animate-slide-in-left">
-                <h1 className="text-2xl font-bold text-foreground">{ranking.title}</h1>
-                <p className="text-muted-foreground capitalize">
-                  {ranking.position ? ranking.position.replace("/", " / ") : "Position"} Applications
-                </p>
-              </div>
+              <h1 className="text-2xl font-bold text-foreground animate-slide-in-left">Position Applications</h1>
+              <span className="px-3 py-1 text-sm font-medium rounded-full bg-primary/10 text-primary border border-primary/20 animate-bounce-in">
+                {ranking.title || "Job Ranking"}
+              </span>
             </div>
-            <div className="flex items-center space-x-3 animate-slide-in-right">
-              <a
-                href="/algorithm"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 px-4 py-2 text-foreground border border-border rounded-lg hover:bg-card/50 transition-all duration-200 hover:scale-105 hover:shadow-md"
-              >
-                <Brain className="h-4 w-4" />
-                <span>View Algorithm</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-              <button
-                onClick={handleScoreApplications}
-                disabled={scoring || applications.length === 0}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 hover:shadow-lg"
-              >
-                <RefreshCw className={`h-4 w-4 ${scoring ? "animate-spin" : ""}`} />
-                <span>{scoring ? "Scoring..." : "Score Applications"}</span>
-              </button>
+            <div className="flex items-center space-x-3">
+              {applications.some((app) => !app.total_score || app.total_score <= 0) && (
+                <button
+                  onClick={handleScoreApplications}
+                  disabled={scoring}
+                  className="flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all duration-200 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed animate-scale-in"
+                >
+                  {scoring ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Scoring...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4" />
+                      <span>Score All</span>
+                    </>
+                  )}
+                </button>
+              )}
+              {selectedCandidates.size > 0 && (
+                <div className="flex items-center space-x-2 animate-slide-in-right">
+                  <button
+                    onClick={() => setShowBulkRejectionModal(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                  >
+                    <UserX className="h-4 w-4" />
+                    <span>Reject ({selectedCandidates.size})</span>
+                  </button>
+                  <button
+                    onClick={() => setShowBulkApprovalModal(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                  >
+                    <UserCheck className="h-4 w-4" />
+                    <span>Approve ({selectedCandidates.size})</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1247,9 +1261,9 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
 
       <div className="p-6 animate-fade-in-up">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div
-            className="bg-card rounded-lg border border-border p-6 hover-lift animate-scale-in"
+            className="bg-card rounded-xl border border-border p-6 hover-lift animate-scale-in shadow-sm"
             style={{ animationDelay: "0.1s" }}
           >
             <div className="flex items-center justify-between">
@@ -1257,12 +1271,14 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 <p className="text-sm font-medium text-muted-foreground mb-1">Total Applications</p>
                 <p className="text-3xl font-bold text-foreground">{stats.total}</p>
               </div>
-              <Users className="h-8 w-8 text-primary" />
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
             </div>
           </div>
 
           <div
-            className="bg-card rounded-lg border border-border p-6 hover-lift animate-scale-in"
+            className="bg-card rounded-xl border border-border p-6 hover-lift animate-scale-in shadow-sm"
             style={{ animationDelay: "0.2s" }}
           >
             <div className="flex items-center justify-between">
@@ -1270,12 +1286,14 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 <p className="text-sm font-medium text-muted-foreground mb-1">Scored</p>
                 <p className="text-3xl font-bold text-foreground">{stats.reviewed}</p>
               </div>
-              <BarChart3 className="h-8 w-8 text-green-600" />
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-950/50 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
             </div>
           </div>
 
           <div
-            className="bg-card rounded-lg border border-border p-6 hover-lift animate-scale-in"
+            className="bg-card rounded-xl border border-border p-6 hover-lift animate-scale-in shadow-sm"
             style={{ animationDelay: "0.3s" }}
           >
             <div className="flex items-center justify-between">
@@ -1283,12 +1301,14 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 <p className="text-sm font-medium text-muted-foreground mb-1">Pending</p>
                 <p className="text-3xl font-bold text-foreground">{stats.pending}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-orange-600" />
+              <div className="p-3 bg-amber-100 dark:bg-amber-950/50 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
             </div>
           </div>
 
           <div
-            className="bg-card rounded-lg border border-border p-6 hover-lift animate-scale-in"
+            className="bg-card rounded-xl border border-border p-6 hover-lift animate-scale-in shadow-sm"
             style={{ animationDelay: "0.4s" }}
           >
             <div className="flex items-center justify-between">
@@ -1296,12 +1316,14 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 <p className="text-sm font-medium text-muted-foreground mb-1">Selected</p>
                 <p className="text-3xl font-bold text-foreground">{stats.selected}</p>
               </div>
-              <UserCheck className="h-8 w-8 text-green-600" />
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-950/50 rounded-lg">
+                <UserCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
             </div>
           </div>
 
           <div
-            className="bg-card rounded-lg border border-border p-6 hover-lift animate-scale-in"
+            className="bg-card rounded-xl border border-border p-6 hover-lift animate-scale-in shadow-sm"
             style={{ animationDelay: "0.5s" }}
           >
             <div className="flex items-center justify-between">
@@ -1309,198 +1331,245 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 <p className="text-sm font-medium text-muted-foreground mb-1">Average Score</p>
                 <p className="text-3xl font-bold text-foreground">{stats.avgScore.toFixed(1)}%</p>
               </div>
-              <Trophy className="h-8 w-8 text-yellow-600" />
+              <div className="p-3 bg-chart-1/20 rounded-lg">
+                <Trophy className="h-6 w-6 text-chart-1" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Applications List */}
-        <div className="bg-card rounded-lg border border-border animate-slide-in-up">
+        {/* Applications Section */}
+        <div
+          className="bg-card rounded-xl border border-border shadow-sm animate-slide-in-up"
+          style={{ animationDelay: "0.6s" }}
+        >
           <div className="px-6 py-4 border-b border-border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h2 className="text-lg font-semibold text-foreground">Applications</h2>
-                {eligibleForSelection.length > 0 && (
-                  <div className="flex items-center space-x-3">
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={allEligibleSelected}
-                        ref={(input) => {
-                          if (input) input.indeterminate = someEligibleSelected && !allEligibleSelected
-                        }}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="rounded border-border text-primary focus:ring-primary"
-                      />
-                      <span className="text-muted-foreground">Select All Eligible</span>
-                    </label>
-                    {selectedCandidates.size > 0 && (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-primary font-medium">{selectedCandidates.size} selected</span>
-                        <button
-                          onClick={() => setShowBulkApprovalModal(true)}
-                          className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 text-sm"
-                        >
-                          <UserCheck className="h-3 w-3" />
-                          <span>Approve Selected</span>
-                        </button>
-                        <button
-                          onClick={() => setShowBulkRejectionModal(true)}
-                          className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105 text-sm"
-                        >
-                          <UserX className="h-3 w-3" />
-                          <span>Reject Selected</span>
-                        </button>
-                        <button
-                          onClick={() => setSelectedCandidates(new Set())}
-                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-foreground">Applications</h2>
+              {eligibleForSelection.length > 0 && (
+                <label className="flex items-center space-x-2 cursor-pointer hover:bg-muted/50 px-3 py-2 rounded-lg transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={allEligibleSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someEligibleSelected && !allEligibleSelected
+                    }}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm font-medium text-foreground">Select All Eligible</span>
+                </label>
+              )}
+            </div>
+
+            {/* Enhanced Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search candidates..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-background border-border focus:border-primary transition-colors"
+                />
               </div>
-              <div className="flex items-center space-x-3">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 hover:border-primary/50"
+
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="bg-background border-border focus:border-primary transition-colors">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="scored">Scored</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="selected">Selected</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="bg-background border-border focus:border-primary transition-colors">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rank">Best Rank</SelectItem>
+                  <SelectItem value="score-high">Highest Score</SelectItem>
+                  <SelectItem value="score-low">Lowest Score</SelectItem>
+                  <SelectItem value="name-az">Name (A-Z)</SelectItem>
+                  <SelectItem value="name-za">Name (Z-A)</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {(searchQuery.trim() || filterStatus !== "all" || sortBy !== "rank") && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setFilterStatus("all")
+                    setSortBy("rank")
+                  }}
+                  className="flex items-center gap-2 hover:bg-muted/50 transition-colors"
                 >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="scored">Scored</option>
-                  <option value="selected">Selected for Interview</option>
-                  <option value="shortlisted">Shortlisted</option>
-                </select>
-              </div>
+                  <X className="w-4 h-4" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+
+            <div className="text-sm text-muted-foreground mt-4">
+              Showing {filteredApplications.length} of {applications.length} applications
             </div>
           </div>
 
-          <div className="divide-y divide-border">
-            {filteredApplications.map((application, index) => {
-              const displayScore = getDisplayScore(application)
-              const displayRank = getDisplayRank(application)
-              const hasRealScore = application.total_score && application.total_score > 0
-              const displayStatus = hasRealScore ? "Scored" : "Pending"
-              const isEligibleForSelection = !application.selected_for_interview && hasRealScore
-              const isSelected = selectedCandidates.has(application.id)
+          {/* Applications List */}
+          {loading ? (
+            <div className="p-12 text-center">
+              <div className="loading-spinner mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading applications...</p>
+            </div>
+          ) : filteredApplications.length === 0 ? (
+            <div className="p-12 text-center animate-fade-in">
+              <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No applications found</h3>
+              <p className="text-muted-foreground">
+                {applications.length === 0 ? "No applications have been submitted yet." : "Try adjusting your filters."}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {filteredApplications.map((application, index) => {
+                const displayScore = getDisplayScore(application)
+                const displayRank = getDisplayRank(application)
+                const hasRealScore = application.total_score && application.total_score > 0
+                const isEligibleForSelection = !application.selected_for_interview && hasRealScore
+                const isSelected = selectedCandidates.has(application.id)
 
-              return (
-                <div
-                  key={application.id}
-                  className="p-6 hover:bg-card/50 transition-all duration-300 hover:scale-[1.01] stagger-item"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {isEligibleForSelection && (
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => handleCandidateSelect(application.id, e.target.checked)}
-                          className="rounded border-border text-primary focus:ring-primary"
-                        />
-                      )}
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-200 hover:scale-110 ${getRankBadgeColor(displayRank)}`}
-                      >
-                        #{displayRank}
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-medium text-foreground">{application.applicant_name}</h3>
-                          {application.selected_for_interview && (
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 border border-green-300">
-                              <UserCheck className="h-3 w-3 inline mr-1" />
-                              Selected
-                            </span>
-                          )}
-                          {application.selected_for_interview && application.interview_invitation_sent_at && (
-                            <button
-                              onClick={() => handleResendInvitation(application.id, application.interview_notes)}
-                              disabled={resendingInvitation === application.id}
-                              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors disabled:opacity-50"
-                              title="Resend interview invitation"
-                            >
-                              {resendingInvitation === application.id ? "Resending..." : "Resend"}
-                            </button>
-                          )}
+                return (
+                  <div
+                    key={application.id}
+                    onClick={() => setSelectedApplication(application)}
+                    className="p-6 hover:bg-muted/30 transition-all duration-300 hover:scale-[1.01] cursor-pointer stagger-item group"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {isEligibleForSelection && (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              handleCandidateSelect(application.id, e.target.checked)
+                            }}
+                            className="rounded border-border text-primary focus:ring-primary transition-colors"
+                          />
+                        )}
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-200 group-hover:scale-110 ${getRankBadgeColor(displayRank)}`}
+                        >
+                          #{displayRank}
                         </div>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <span>{application.applicant_email}</span>
-                          {application.applicant_city && <span>{application.applicant_city}</span>}
-                          <span>Applied {new Date(application.submitted_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <div className="flex items-center space-x-2">
-                          <div
-                            className={`px-3 py-1 rounded-lg font-semibold transition-all duration-200 hover:scale-105 ${getScoreColor(displayScore)}`}
-                          >
-                            {displayScore}%
+                        <div>
+                          <div className="flex items-center space-x-3 mb-1">
+                            <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {application.applicant_name}
+                            </h3>
+                            {application.selected_for_interview && (
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 animate-bounce-in">
+                                <UserCheck className="h-3 w-3 inline mr-1" />
+                                Selected
+                              </span>
+                            )}
+                            {application.status === "approved" && (
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                                ✓ Approved
+                              </span>
+                            )}
+                            {application.status === "rejected" && (
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50">
+                                ✗ Rejected
+                              </span>
+                            )}
                           </div>
-                          {!hasRealScore && (
-                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full animate-pulse-slow">
-                              Pending
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <span className="hover:text-foreground transition-colors">
+                              {application.applicant_email}
                             </span>
-                          )}
+                            {application.applicant_city && (
+                              <span className="hover:text-foreground transition-colors">
+                                {application.applicant_city}
+                              </span>
+                            )}
+                            <span>Applied {new Date(application.submitted_at).toLocaleDateString()}</span>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 capitalize">{displayStatus}</p>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {!application.selected_for_interview &&
-                          hasRealScore &&
-                          application.status !== "rejected" &&
-                          application.status !== "approved" && (
-                            <>
-                              <button
-                                onClick={() => {
-                                  setSelectedApplicationForRejection(application)
-                                  setShowRejectionModal(true)
-                                }}
-                                className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105 text-sm"
-                              >
-                                <UserX className="h-3 w-3" />
-                                <span>Reject</span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedApplicationForInterview(application)
-                                  setShowApprovalModal(true)
-                                }}
-                                className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 hover:scale-105 text-sm"
-                              >
-                                <UserCheck className="h-3 w-3" />
-                                <span>Approved</span>
-                              </button>
-                            </>
-                          )}
-                        <button
-                          onClick={() => handleDeleteApplication(application)}
-                          className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105 text-sm"
-                          title="Delete application"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          <span>Delete</span>
-                        </button>
-                        <button
-                          onClick={() => setSelectedApplication(application)}
-                          className="flex items-center space-x-2 px-3 py-2 text-primary hover:bg-primary/10 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-md"
-                        >
-                          <Eye className="h-4 w-4" />
-                          <span>View Details</span>
-                        </button>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className={`px-4 py-2 rounded-lg font-bold text-lg transition-all duration-200 group-hover:scale-105 ${getScoreColor(displayScore)}`}
+                            >
+                              {displayScore}%
+                            </div>
+                            {!hasRealScore && (
+                              <span className="text-xs bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-full animate-pulse-slow border border-amber-200 dark:border-amber-800/50">
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          {!application.selected_for_interview &&
+                            application.status !== "rejected" &&
+                            application.status !== "approved" &&
+                            hasRealScore && (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedApplicationForRejection(application)
+                                    setShowRejectionModal(true)
+                                  }}
+                                  className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all duration-200 hover:scale-110"
+                                  title="Reject candidate"
+                                >
+                                  <UserX className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedApplicationForInterview(application)
+                                    setShowApprovalModal(true)
+                                  }}
+                                  className="p-2 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 rounded-lg transition-all duration-200 hover:scale-110"
+                                  title="Approve candidate"
+                                >
+                                  <UserCheck className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteApplication(application)
+                            }}
+                            className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all duration-200 hover:scale-110"
+                            title="Delete application"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1658,52 +1727,76 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
       )}
 
       {showApprovalModal && selectedApplicationForInterview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-card rounded-lg border border-border p-6 max-w-md w-full mx-4 animate-scale-in">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <UserCheck className="h-5 w-5 text-green-600" />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="glass-emerald rounded-2xl border border-emerald-200/20 dark:border-emerald-800/20 p-6 sm:p-8 max-w-lg w-full mx-4 animate-scale-in shadow-2xl">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg animate-bounce-gentle">
+                <UserCheck className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Approve Candidate</h3>
-                <p className="text-sm text-muted-foreground">{selectedApplicationForInterview.applicant_name}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white font-work-sans">Approve Candidate</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-open-sans">
+                  {selectedApplicationForInterview.applicant_name}
+                </p>
               </div>
             </div>
-            <div className="space-y-4">
-              <div className="bg-card/50 rounded-lg p-4 border border-border/50">
-                <label htmlFor="approvalNotes" className="block text-sm font-medium text-foreground mb-2">
-                  HR Notes
+
+            <div className="space-y-6">
+              <div className="glass rounded-xl p-4 border border-emerald-200/20 dark:border-emerald-800/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 font-work-sans">
+                    Candidate Score
+                  </span>
+                  <span className="text-2xl font-bold gradient-text font-work-sans">
+                    {selectedApplicationForInterview.total_score}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-1000 ease-out animate-scale-x"
+                    style={{ width: `${selectedApplicationForInterview.total_score}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 font-work-sans">
+                  Interview Notes (Optional)
                 </label>
                 <textarea
-                  id="approvalNotes"
                   value={interviewNotes}
                   onChange={(e) => setInterviewNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200"
+                  placeholder="Add any notes about this candidate or interview requirements..."
                   rows={4}
-                  placeholder="Optional notes for the candidate..."
+                  className="w-full px-4 py-3 bg-white/50 dark:bg-slate-800/50 border-2 border-emerald-200/50 dark:border-emerald-800/50 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 font-open-sans resize-none"
                 />
               </div>
-              <div className="flex items-center justify-end space-x-3">
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
-                  onClick={() => setShowApprovalModal(false)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 hover:scale-105"
+                  onClick={() => {
+                    setShowApprovalModal(false)
+                    setSelectedApplicationForInterview(null)
+                    setInterviewNotes("")
+                  }}
+                  className="flex-1 px-6 py-3 glass hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-all duration-300 font-work-sans font-semibold text-slate-700 dark:text-slate-300 border-2 border-slate-200 dark:border-slate-700"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleApproveCandidate(selectedApplicationForInterview.id)}
                   disabled={isApprovingCandidate}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all duration-200 hover:scale-105"
+                  className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 ripple-effect font-work-sans font-semibold shadow-lg"
                 >
                   {isApprovingCandidate ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       <span>Approving...</span>
                     </>
                   ) : (
                     <>
-                      <UserCheck className="h-4 w-4" />
-                      <span>Approve</span>
+                      <CheckCircle className="h-5 w-5" />
+                      <span>Approve Candidate</span>
                     </>
                   )}
                 </button>

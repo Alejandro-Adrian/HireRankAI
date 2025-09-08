@@ -6,6 +6,20 @@ function getSupabaseClient() {
   if (!client) {
     throw new Error("Supabase client not available")
   }
+
+  // Check if we're getting the mock client
+  if (typeof client.from === "function") {
+    const testQuery = client.from("users")
+    if (testQuery && typeof testQuery.select === "function") {
+      // This is likely the real client
+      return client
+    }
+  }
+
+  // If we reach here, we might have the mock client
+  console.error("[v0] Supabase client appears to be a mock client. Check your environment variables:")
+  console.error("[v0] Required: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY")
+
   return client
 }
 

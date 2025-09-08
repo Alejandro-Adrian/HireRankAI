@@ -118,18 +118,18 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
 
   if (submitted) {
     return (
-      <div className="bg-gray-900 rounded-lg shadow-sm border border-gray-700 p-8 text-center">
-        <div className="w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-green-400" />
+      <div className="bg-card rounded-lg shadow-sm border border-border p-8 text-center animate-scale-in">
+        <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
+          <CheckCircle className="h-8 w-8 text-success" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Application Submitted!</h2>
-        <p className="text-gray-300 mb-4">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Application Submitted!</h2>
+        <p className="text-muted-foreground mb-4">
           Thank you for your interest in the {ranking.position.replace("/", " / ")} position.
         </p>
         {extractedInfo && (
-          <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 mb-4">
-            <h3 className="text-sm font-medium text-blue-300 mb-2">Extracted Information</h3>
-            <div className="text-sm text-blue-200">
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4 animate-slide-in-up">
+            <h3 className="text-sm font-medium text-primary mb-2">Extracted Information</h3>
+            <div className="text-sm text-foreground">
               <p>
                 <strong>Name:</strong> {extractedInfo.name}
               </p>
@@ -149,7 +149,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
             </div>
           </div>
         )}
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           We have received your application and automatically extracted your personal information from your resume. Your
           application is being processed and scored automatically. You will be contacted if you are selected for the
           next stage.
@@ -167,37 +167,40 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
       {error && (
-        <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 flex items-start space-x-3 animate-bounce-gentle">
-          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-red-200 text-sm">{error}</p>
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-start space-x-3 animate-shake">
+          <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+          <p className="text-destructive text-sm">{error}</p>
         </div>
       )}
 
       {hasResume && !error && (
-        <div className="bg-green-900/20 border border-green-800 rounded-lg p-4 flex items-start space-x-3 animate-scale-in">
-          <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
-          <p className="text-green-200 text-sm">
+        <div className="bg-success/10 border border-success/20 rounded-lg p-4 flex items-start space-x-3 animate-scale-in">
+          <CheckCircle className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+          <p className="text-success text-sm">
             Resume uploaded successfully. Personal information will be extracted automatically when you submit.
           </p>
         </div>
       )}
 
-      <div className="bg-gray-900 rounded-lg shadow-sm border border-gray-700 p-6 hover-lift animate-slide-in-left">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6 hover-lift animate-slide-in-left">
         <div className="flex items-center space-x-2 mb-4">
-          <Upload className="h-5 w-5 text-blue-400" />
-          <h2 className="text-lg font-semibold text-white">Documents</h2>
+          <Upload className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Documents</h2>
         </div>
 
-        <p className="text-sm text-gray-300 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           Upload your resume and any supporting documents. Your personal information (name, email, phone, location) will
           be automatically extracted from your resume.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border-2 border-dashed border-blue-600 rounded-lg p-6 text-center hover:border-blue-500 transition-all duration-300 bg-blue-900/20 hover:bg-blue-900/30 hover:scale-105 transform">
-            <FileText className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-            <h3 className="text-sm font-medium text-white mb-1">Resume/CV *</h3>
-            <p className="text-xs text-gray-400 mb-3">PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB) - Required</p>
+          <div
+            className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center hover:border-primary/50 transition-all duration-300 bg-primary/5 hover:bg-primary/10 hover:scale-105 transform animate-slide-in-up"
+            style={{ animationDelay: "0.1s" }}
+          >
+            <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-foreground mb-1">Resume/CV *</h3>
+            <p className="text-xs text-muted-foreground mb-3">PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB) - Required</p>
             <input
               type="file"
               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
@@ -207,16 +210,19 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
             />
             <label
               htmlFor="resume-upload"
-              className="inline-flex items-center px-3 py-2 border border-blue-600 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-300 bg-gray-800 hover:bg-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
+              className="inline-flex items-center px-3 py-2 border border-primary shadow-sm text-sm leading-4 font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
             >
               Choose File
             </label>
           </div>
 
-          <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-all duration-300 bg-gray-800/20 hover:bg-gray-800/30 hover:scale-105 transform">
-            <Award className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-            <h3 className="text-sm font-medium text-white mb-1">Certificates</h3>
-            <p className="text-xs text-gray-400 mb-3">PDF, JPG, PNG (Max 10MB each)</p>
+          <div
+            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-primary/50 transition-all duration-300 bg-muted/20 hover:bg-muted/30 hover:scale-105 transform animate-slide-in-up"
+            style={{ animationDelay: "0.2s" }}
+          >
+            <Award className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-foreground mb-1">Certificates</h3>
+            <p className="text-xs text-muted-foreground mb-3">PDF, JPG, PNG (Max 10MB each)</p>
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
@@ -227,16 +233,19 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
             />
             <label
               htmlFor="certificate-upload"
-              className="inline-flex items-center px-3 py-2 border border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
+              className="inline-flex items-center px-3 py-2 border border-border shadow-sm text-sm leading-4 font-medium rounded-md text-foreground bg-background hover:bg-muted cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
             >
               Choose Files
             </label>
           </div>
 
-          <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-all duration-300 bg-gray-800/20 hover:bg-gray-800/30 hover:scale-105 transform">
-            <Briefcase className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-            <h3 className="text-sm font-medium text-white mb-1">Portfolio</h3>
-            <p className="text-xs text-gray-400 mb-3">PDF, JPG, PNG (Max 10MB each)</p>
+          <div
+            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-primary/50 transition-all duration-300 bg-muted/20 hover:bg-muted/30 hover:scale-105 transform animate-slide-in-up"
+            style={{ animationDelay: "0.3s" }}
+          >
+            <Briefcase className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-foreground mb-1">Portfolio</h3>
+            <p className="text-xs text-muted-foreground mb-3">PDF, JPG, PNG (Max 10MB each)</p>
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
@@ -247,16 +256,19 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
             />
             <label
               htmlFor="portfolio-upload"
-              className="inline-flex items-center px-3 py-2 border border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
+              className="inline-flex items-center px-3 py-2 border border-border shadow-sm text-sm leading-4 font-medium rounded-md text-foreground bg-background hover:bg-muted cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
             >
               Choose Files
             </label>
           </div>
 
-          <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 transition-all duration-300 bg-gray-800/20 hover:bg-gray-800/30 hover:scale-105 transform">
-            <Upload className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-            <h3 className="text-sm font-medium text-white mb-1">Other Documents</h3>
-            <p className="text-xs text-gray-400 mb-3">Any format (Max 10MB each)</p>
+          <div
+            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-primary/50 transition-all duration-300 bg-muted/20 hover:bg-muted/30 hover:scale-105 transform animate-slide-in-up"
+            style={{ animationDelay: "0.4s" }}
+          >
+            <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-foreground mb-1">Other Documents</h3>
+            <p className="text-xs text-muted-foreground mb-3">Any format (Max 10MB each)</p>
             <input
               type="file"
               multiple
@@ -266,7 +278,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
             />
             <label
               htmlFor="other-upload"
-              className="inline-flex items-center px-3 py-2 border border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
+              className="inline-flex items-center px-3 py-2 border border-border shadow-sm text-sm leading-4 font-medium rounded-md text-foreground bg-background hover:bg-muted cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md"
             >
               Choose Files
             </label>
@@ -275,22 +287,22 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
 
         {files.length > 0 && (
           <div className="mt-6 animate-slide-in-right">
-            <h3 className="text-sm font-medium text-white mb-3">Uploaded Files</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">Uploaded Files</h3>
             <div className="space-y-2">
               {files.map((fileUpload, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-sm stagger-item"
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-all duration-300 hover:scale-[1.02] hover:shadow-sm stagger-item border border-border/50"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="flex items-center space-x-3">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium text-white">{fileUpload.file.name}</p>
-                      <p className="text-xs text-gray-400 capitalize">
+                      <p className="text-sm font-medium text-foreground">{fileUpload.file.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
                         {fileUpload.category} • {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
                         {fileUpload.category === "resume" && (
-                          <span className="text-blue-400 font-medium"> (Required)</span>
+                          <span className="text-primary font-medium"> (Required)</span>
                         )}
                       </p>
                     </div>
@@ -298,7 +310,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
                   <button
                     type="button"
                     onClick={() => removeFile(index)}
-                    className="text-red-400 hover:text-red-300 text-sm transition-all duration-200 hover:scale-110 px-2 py-1 rounded hover:bg-red-900/20"
+                    className="text-destructive hover:text-destructive/80 text-sm transition-all duration-200 hover:scale-110 px-2 py-1 rounded hover:bg-destructive/10"
                   >
                     Remove
                   </button>
@@ -310,20 +322,21 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
       </div>
 
       {showCriteria && selectedCriteria.length > 0 && (
-        <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6 animate-slide-in-right">
-          <h3 className="text-sm font-medium text-blue-300 mb-2">Evaluation Criteria</h3>
-          <p className="text-sm text-blue-200 mb-3">
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 animate-slide-in-right">
+          <h3 className="text-sm font-medium text-primary mb-2">Evaluation Criteria</h3>
+          <p className="text-sm text-foreground mb-3">
             Your application will be evaluated based on the following criteria (extracted from your resume and
             documents):
           </p>
           <div className="flex flex-wrap gap-2">
-            {selectedCriteria.map((criterion) => {
+            {selectedCriteria.map((criterion, index) => {
               const weight = criteriaWeights[criterion]
               const importance = weight <= 0.3 ? "Low" : weight <= 0.6 ? "Medium" : weight <= 0.8 ? "High" : "Critical"
               return (
                 <span
                   key={criterion}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-800/30 text-blue-200"
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 animate-fade-in hover:scale-105 transition-transform duration-200"
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {criterion.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())} ({importance})
                 </span>
@@ -333,11 +346,11 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
         </div>
       )}
 
-      <div className="flex justify-center animate-slide-in-right">
+      <div className="flex justify-center animate-slide-in-up">
         <button
           type="submit"
           disabled={submitting || !hasResume}
-          className="flex items-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-lg font-medium transform hover:scale-105 hover:shadow-lg active:scale-95"
+          className="flex items-center space-x-2 px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-lg font-medium transform hover:scale-105 hover:shadow-lg active:scale-95 disabled:hover:scale-100"
         >
           {submitting ? (
             <>
