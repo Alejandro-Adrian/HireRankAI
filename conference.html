@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Meet — Audio STT</title>
+  <link rel="stylesheet" href="meeting.css">
+</head>
+<body>
+  <div class="meeting-container">
+    <div class="video-section">
+      <video id="localVideo" autoplay playsinline muted></video>
+
+      <div class="controls">
+        <button id="startBtn">Start Mic</button>
+        <button id="stopBtn" disabled>Stop Mic</button>
+        <button id="toggleCam">Toggle Camera Preview</button>
+      </div>
+
+      <div class="caption" id="liveCaption" style="margin-top:16px; width:80%; color:#dfefff;"></div>
+    </div>
+
+    <div class="sidebar">
+      <h2>Participants</h2>
+      <ul id="participants">
+        <li id="youEntry">
+          <div style="font-weight:600">You</div>
+          <div id="youTranscript" style="font-size:13px; color:#cbd5e1; margin-top:6px;">(no speech yet)</div>
+        </li>
+      </ul>
+
+      <h2>Chat</h2>
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-input">
+        <input type="text" id="chatMessage" placeholder="Type a message...">
+        <button id="sendMessage">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="meeting.js"></script>
+</body>
+</html>

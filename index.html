@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Encrypted Socket Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsencrypt/bin/jsencrypt.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <h1>Back-End API</h1>
+
+  <input type="text" placeholder="Enter resume sentence" id="graderMessage"/>
+  <button onclick="getScore()">Get Score</button>
+
+  <input type="text" placeholder="Enter AI prompt" id="aiMessage"/>
+  <button onclick="accessAI()">Ask AI</button>
+
+  <h3>Username for Token:</h3>
+  <input type="text" placeholder="Enter your name" id="usernameInput"/>
+  <button onclick="login()">Login & Authenticate</button>
+
+  <h2>OCR</h2>
+  <input type="file" id="ImageInput" accept="image/*"/>
+  <button onclick="readImage()">Read Image</button>
+
+  <h2>Notes</h2>
+  <ul>
+    <li>The Access AI requires an RTX or a decent GPU (it may take minutes on weaker ones)</li>
+    <li><code>pip install torch transformers pycryptodome cryptography flask flask-cors flask-socketio flask-limiter PyJWT</code></li>
+    <li>Make sure <code>app.py</code> is running</li>
+    <li>Define grading criteria (e.g., what makes a resume 0 or 10)</li>
+    <li>The AI model might forget context — add memory handling</li>
+    <li>Improve security</li>
+  </ul>
+
+  <a href="./conference.html">Enter Meeting Mode</a>
+
+<script>
+const publicKey = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgt17dmNzfn1vQiYbS3eC
+2vgZTDtDzlXNyZzUn2Oc7yjfvdx1CosdQtjjDkiPNEOz9YMeEA0eZErt9gph7AQ1
+veVKTCLdvSOauxR/8WLbjPj8riBB/Hs8eBzz2M6Ii6L1WkS6YfXDBvz3RzE2/2dq
+BSnTeRoqMRoWTDoUc8t+o/EMtOkBo5+epN72MW+mpbDPH+roC6wdqOlTieUk45gw
+SiCQTDD9QeW436Y8plwr39uYCdch+jLfPIONpbyi2/hwWz8+ChFbluQZghSbEhVl
+t4TbxK/oIWDhWjKa+GWF1IRRrSk7ORq43LTfAtY5lmwZ/kQOZkbv1pCeivwjVjCq
+NwIDAQAB
+-----END PUBLIC KEY-----`;
+
+const privateKey = `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDXLDbzg1Ls1rBa
+uAaVgc32q+ayjl0pkWvgCJ+ZEwFKuYb7rmuqz05OmZcTKqpSasFuBbrWfXWZAzV2
+QwmMf/+PGbUBa/T9fvIoCxhKkB+iczj3697UBZ0kO+stWtStEM0jS+ZS1TKqN17l
+9tl0CBWw3GPVDxN+ysnOkmeJb1RSZtF32Jnw8zi8bBVACYXFvIWQpvRLvMn5TWS6
+0+CMJ76B+IbVABNrfshhc7aGjP8RQZupfZV93sJ+lbnc5cv99fIc89VqsswQueTq
+QTVq4xMpnCeeP3kXjF9mmB/v+QntvBAPswcu90uXBaVcFbmol2NWdknoQwhoceEm
+MmeqtFWrAgMBAAECggEAHyPGdhpoy17MmextA4EMGilJk0i4IdZqWrtUwZX3B2Xv
+K4hUC53B0u02aG8xxAiwIqiQoA77EGBfAdT00lEJ3p9VSzXg+DjBedsVMmFGOr/b
+HEIV9vAzDDXhtKgjBELctUF8PTuef/TQdo5xbPHolbZnekOayiw15X/ZnRGwDdaQ
+XxWIcJTksgxGNl1Ar07aAIyq/oI0rP5HfHQlLVEnQpPD22f3JixkIcWWm/LLW3Ol
+dCjXNcT8AK9+DhMtluWA1CVrNzMq0+2nCoMG2Y6jNMTDXYUMPNRFCI7emV9sQYDj
+7spyFCjGIMjyPke4/rUUh+x3ueeEtfyTf6Bfwq1HuQKBgQD6/QZl+nqT8DP5v4SS
+em6qa1FMgq4/MEPJGxp9PL3fJJpRq7S6dnAleDQmtUHyOau2NqDqdCN3BkPjnABO
+bQN+jws8uSvlbf/oKIgKBjpapmxZMa6FaR/jFAd3VO9qO0e1ZWf4mLzjzqv8ia83
+AuWUOJ2FAP81qj0jvq+dhaDJeQKBgQDbeBxtv4/O8kcidkpgsE4TvGoWM9RUhva6
+XGCHWEIBDqkOfdKdChGjPn6k18YRmXb3eH7IMwJ9pHbZYffXGD0vPCwC39xhyAd3
+jLlO5evXXbyrvvksGMGX3zTX1YON1Kz4aV5fc0PG8+YbxazGaTtWW1+rDI96Hdei
+Jqrf+sCzQwKBgQCdO6WmfSQNSY1GCBSlLs3lNRXZOISwUSwl8DTIACVyhRunzkmK
+Bmh7ELKbDTIi7L4FiHOGbPtKtUISdMg8WU63GiWQBPDa6e5HIh0XKo+j+l4mAlmy
+egjf2MxUlYDmq/xgRwa7VfP/Qpm7uwVpEQeBs3X6vIUkuWFT40FhDTWNAQKBgQCh
+CG2bnX5Qc3b8c105usNfOdWBewAmEW2B6nwtcvXjPrWO24WpEpVEeXuFSombqkYf
+aLtl+/+s3vsRoA+xNKjYOsd0SHu1B4drEcd6e7vjp3Tjc9nyoCuUWwO0BodjjxRn
+pTDIypOFrLo/0HhokRgn0h3NLQctrC3nXYXtmFjCbwKBgGrFXKQQmcd1+Ujnp5by
+PTdMQ6uxoBTvU0q/y+JTqFV2GMtnzdKpmmlQrfcdwrTMqh/aFv7xHQ4qbqFwW2lk
+ukjnv5ZBDIxD86vo4zLDR2KScUtl+RRHQWzsm+9qVVH4ERbhN9NoQ1ltGMFEYb5n
+r7PBasRWL4oAa5LCFQUknsXw
+-----END PRIVATE KEY-----`;
+
+const encryptor = new JSEncrypt();
+encryptor.setPublicKey(publicKey);
+const decryptor = new JSEncrypt();
+decryptor.setPrivateKey(privateKey);
+
+let authToken = null;
+let isAuthenticated = false;
+let resultHandler = null;
+
+const socket = io("http://localhost:5000");
+
+socket.on("connect", () => {
+  console.log("🟢 Connected to WebSocket server");
+  if (authToken) {
+    socket.emit("authenticate", { token: authToken });
+  }
+});
+
+socket.on("auth_success", (data) => {
+  isAuthenticated = true;
+  alert("Authenticated: " + data.message);
+});
+
+socket.on("auth_failed", (data) => {
+  isAuthenticated = false;
+  alert("Authentication failed: " + data.error);
+});
+
+socket.on("result", (data) => {
+  const decrypted = decryptor.decrypt(data.encrypted);
+  if (!decrypted) return alert("Failed to decrypt message.");
+
+  try {
+    const parsed = JSON.parse(decrypted);
+
+    if (resultHandler) {
+      const handler = resultHandler;
+      resultHandler = null;
+      return handler(parsed);
+    }
+
+    if (parsed.score !== undefined && parsed.tag) {
+      alert(`Resume Score:\nScore: ${parsed.score}\nTag: ${parsed.tag}`);
+    } else if (parsed.message) {
+      alert("AI says:\n" + parsed.message);
+    } else if (parsed.error) {
+      alert("Error: " + parsed.error);
+    } else {
+      alert("Unknown response:\n" + JSON.stringify(parsed, null, 2));
+    }
+  } catch (err) {
+    alert("Invalid server response");
+  }
+});
+
+async function login() {
+  const username = document.getElementById("usernameInput").value.trim();
+  if (!username) return alert("Enter a username");
+
+  try {
+    const res = await fetch("http://localhost:5000/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    });
+
+    const data = await res.json();
+    if (data.token) {
+      authToken = data.token;
+      socket.emit("authenticate", { token: authToken });
+    } else {
+      alert("Failed to get token.");
+    }
+  } catch (err) {
+    alert("Failed to fetch token");
+  }
+}
+
+function getScore(message = "", callback) {
+  if (!message) {
+    message = document.getElementById("graderMessage").value.trim();
+  }
+
+  if (!authToken || !isAuthenticated) return alert("Please login first and wait for authentication to complete.");
+
+  const payload = { instruction: "grade", message };
+  const json = JSON.stringify(payload);
+  if (json.length > 240) return alert("Message too long to encrypt.");
+  const encrypted = encryptor.encrypt(json);
+  if (!encrypted) return alert("Encryption failed.");
+
+  if (callback) {
+    resultHandler = (parsed) => {
+      if (parsed.score !== undefined && parsed.tag) {
+        callback(parsed.score, parsed.tag);
+      } else {
+        alert("Unexpected grading result");
+      }
+    };
+  }
+
+  socket.emit("client_request", { encrypted });
+}
+
+function accessAI() {
+  const message = document.getElementById("aiMessage").value.trim();
+  if (!message) return alert("Enter a prompt");
+
+  if (!authToken || !isAuthenticated) return alert("Please login first and wait for authentication to complete.");
+
+  const payload = { instruction: "AI", message };
+  const encrypted = encryptor.encrypt(JSON.stringify(payload));
+  if (!encrypted) return alert("Encryption failed.");
+
+  resultHandler = (parsed) => {
+    if (parsed.message) {
+      alert("AI says:\n" + parsed.message);
+    } else {
+      alert("Unexpected AI response");
+    }
+  };
+
+  socket.emit("client_request", { encrypted });
+}
+
+function processSentences(sentences) {
+  let index = 0;
+  let totalScore = 0;
+  let tagCounts = {};
+  let totalCount = 0;
+
+  function processNext() {
+    if (index >= sentences.length) {
+      const avg = (totalScore / totalCount).toFixed(2);
+      let tagSummary = "Tag Distribution:\n";
+      for (const tag in tagCounts) {
+        const percent = ((tagCounts[tag] / totalCount) * 100).toFixed(1);
+        tagSummary += `• ${tag}: ${percent}% (${tagCounts[tag]})\n`;
+      }
+      alert(`Final OCR Analysis:\n\nAverage Score: ${avg}\n\n${tagSummary}`);
+      return;
+    }
+
+    const sentence = sentences[index].trim().slice(0, 69);
+    getScore(sentence, (score, tag) => {
+      totalScore += score;
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      totalCount++;
+      index++;
+      setTimeout(processNext, 100);
+    });
+  }
+
+  processNext();
+}
+
+function readImage() {
+  const file = document.getElementById("ImageInput").files[0];
+  if (!file) return alert("No file selected.");
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    Tesseract.recognize(e.target.result, 'eng')
+      .then(result => {
+        const text = result.data.text.trim();
+        alert("OCR Result:\n" + text);
+        const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [text];
+        processSentences(sentences);
+      })
+      .catch(err => {
+        console.error("OCR error:", err);
+        alert("OCR failed.");
+      });
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+</body>
+</html>
