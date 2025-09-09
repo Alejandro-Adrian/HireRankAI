@@ -1,4 +1,4 @@
-# Authentication System
+# HireRankerAI
 
 ## Local Development Setup
 
