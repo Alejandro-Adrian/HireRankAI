@@ -32,3 +32,5 @@ If you get "Internal server error" during email verification:
 - `EMAIL_USER` - Your Gmail address
 - `EMAIL_PASS` - Your Gmail app password
 - `NEXT_PUBLIC_SITE_URL` - Your site URL (http://localhost:3000 for local)
+
+testing branch 
