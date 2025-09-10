@@ -23,13 +23,7 @@ function getSupabaseClient() {
   return client
 }
 
-export async function createUser(
-  email: string,
-  password: string,
-  firstname: string,
-  lastname: string,
-  company: string,
-) {
+export async function createUser(email: string, password: string, firstname: string, lastname: string) {
   const supabase = getSupabaseClient()
   const hashedPassword = await hashPassword(password)
 
@@ -40,7 +34,6 @@ export async function createUser(
       password_hash: hashedPassword,
       firstname,
       lastname,
-      company_name: company,
       is_verified: false,
     })
     .select()

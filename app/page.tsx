@@ -99,7 +99,7 @@ export default function Home() {
           </div>
 
           <p
-            className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 mb-8 sm:mb-12 leading-relaxed font-open-sans animate-fade-in-up"
+            className="text-lg sm:text-xl text-slate-700 dark:text-slate-300 mb-8 sm:mb-12 leading-relaxed font-open-sans animate-fade-in-up"
             style={{ animationDelay: "0.6s" }}
           >
             Rank applicants intelligently with AI-powered scoring, video interviews, and automated workflows. Make
@@ -180,10 +180,10 @@ export default function Home() {
                   {feature.icon}
                 </div>
                 <div>
-                  <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-1 font-work-sans">
+                  <h3 className="text-slate-800 dark:text-slate-100 font-semibold text-lg mb-1 font-work-sans">
                     {feature.title}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm font-open-sans">{feature.description}</p>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm font-open-sans">{feature.description}</p>
                 </div>
               </div>
             ))}
@@ -200,7 +200,7 @@ export default function Home() {
         </div>
 
         <div className="w-full lg:w-96 animate-fade-in-right">
-          <div className="glass-emerald rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl border border-emerald-200/20 dark:border-emerald-800/20 hover-lift">
+          <div className="glass-emerald rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl border border-emerald-200/20 dark:border-emerald-800/20 hover-lift bg-white/80 dark:bg-slate-800/80">
             {currentView === "login" && (
               <LoginForm
                 onLogin={handleLogin}
@@ -221,7 +221,7 @@ export default function Home() {
               Everything You Need for
               <span className="gradient-text block sm:inline"> Smart Hiring</span>
             </h2>
-            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 leading-relaxed font-open-sans">
+            <p className="text-lg sm:text-xl text-slate-700 dark:text-slate-300 leading-relaxed font-open-sans">
               From candidate screening to final interviews, HireRankerAI streamlines your entire hiring workflow with
               cutting-edge AI technology.
             </p>
@@ -243,7 +243,7 @@ export default function Home() {
                 style={{ animationDelay: `${0.5 + index * 0.1}s` }}
               >
                 <div className="text-2xl sm:text-3xl font-bold gradient-text mb-2 font-work-sans">{stat.number}</div>
-                <div className="text-slate-600 dark:text-slate-400 text-sm font-open-sans">{stat.label}</div>
+                <div className="text-slate-700 dark:text-slate-300 text-sm font-open-sans">{stat.label}</div>
               </div>
             ))}
           </div>

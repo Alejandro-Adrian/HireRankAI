@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createAdminClient } from "@/lib/supabase/server"
 import { sendEmail } from "@/lib/email"
-
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -10,6 +8,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const applicationId = params.id
 
     console.log("[v0] 🚀 Starting candidate approval for application:", applicationId)
+
+    const supabase = createAdminClient()
 
     // Fetch application details with ranking information
     const { data: application, error: fetchError } = await supabase

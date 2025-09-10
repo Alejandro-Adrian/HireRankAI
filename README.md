@@ -1,4 +1,4 @@
-# HireRankerAI
+# Authentication System
 
 ## Local Development Setup
 
@@ -22,7 +22,7 @@ If you get "Internal server error" during email verification:
 1. **Check Environment Variables**: Ensure all Supabase variables are set in `.env.local`
 2. **Check Database Connection**: Verify your Supabase project is active and accessible
 3. **Check Email Configuration**: Ensure EMAIL_USER and EMAIL_PASS are correct
-4. **Check Console Logs**: Look for  debug messages in your terminal
+4. **Check Console Logs**: Look for `[v0]` debug messages in your terminal
 
 ## Required Environment Variables
 
@@ -32,5 +32,3 @@ If you get "Internal server error" during email verification:
 - `EMAIL_USER` - Your Gmail address
 - `EMAIL_PASS` - Your Gmail app password
 - `NEXT_PUBLIC_SITE_URL` - Your site URL (http://localhost:3000 for local)
-
-testing branch 

@@ -4,10 +4,10 @@
 
 @layer base {
   :root {
-    /* Updated to emerald-based design tokens from design brief */
+    /* Enhanced emerald-based design tokens with professional color palette */
     --background: 0 0% 100%;
     --foreground: 215 25% 27%;
-    --card: 210 40% 94%;
+    --card: 210 40% 98%;
     --card-foreground: 166 76% 37%;
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 27%;
@@ -15,7 +15,7 @@
     --primary-foreground: 0 0% 100%;
     --secondary: 162 63% 41%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 40% 94%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215 25% 27%;
     --accent: 162 63% 41%;
     --accent-foreground: 0 0% 100%;
@@ -41,7 +41,7 @@
   }
 
   .dark {
-    /* Updated dark mode tokens to complement emerald theme */
+    /* Enhanced dark mode with sophisticated emerald accents */
     --background: 215 28% 17%;
     --foreground: 210 40% 98%;
     --card: 215 28% 17%;
@@ -81,105 +81,105 @@
   }
 }
 
-/* Enhanced animation utilities with more sophisticated micro-interactions */
+/* Enhanced animation utilities with buttery smooth transitions that will make grown men cry */
 @layer utilities {
-  /* Enhanced fade animations */
+  /* Ultra-smooth fade animations with perfect easing curves */
   .animate-fade-in {
-    animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .animate-fade-in-up {
-    animation: fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .animate-fade-in-down {
-    animation: fadeInDown 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInDown 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .animate-fade-in-left {
-    animation: fadeInLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInLeft 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .animate-fade-in-right {
-    animation: fadeInRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInRight 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  /* Enhanced scale animations */
+  /* Luxurious scale animations with perfect spring physics */
   .animate-scale-in {
-    animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation: scaleIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
 
   .animate-scale-in-center {
-    animation: scaleInCenter 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: scaleInCenter 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
   .animate-scale-bounce {
-    animation: scaleBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    animation: scaleBounce 1.0s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
 
-  /* Enhanced slide animations */
+  /* Silky smooth slide animations */
   .animate-slide-in-left {
-    animation: slideInLeft 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: slideInLeft 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
   .animate-slide-in-right {
-    animation: slideInRight 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: slideInRight 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
   .animate-slide-in-up {
-    animation: slideInUp 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: slideInUp 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
   .animate-slide-in-down {
-    animation: slideInDown 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: slideInDown 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
-  /* Enhanced bounce animations */
+  /* Gentle, emotional bounce animations */
   .animate-bounce-gentle {
-    animation: bounceGentle 0.8s ease-out forwards;
+    animation: bounceGentle 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
 
   .animate-bounce-in {
-    animation: bounceIn 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    animation: bounceIn 1.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
 
   .animate-bounce-soft {
-    animation: bounceSoft 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: bounceSoft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 
-  /* Advanced hover effects */
+  /* Professional hover effects with emotional impact */
   .hover-lift {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .hover-lift:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(5, 150, 105, 0.15);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 25px 50px rgba(5, 150, 105, 0.2), 0 10px 20px rgba(5, 150, 105, 0.1);
   }
 
   .hover-glow {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .hover-glow:hover {
-    box-shadow: 0 0 30px rgba(5, 150, 105, 0.3);
-    transform: scale(1.02);
+    box-shadow: 0 0 40px rgba(5, 150, 105, 0.4), 0 0 80px rgba(5, 150, 105, 0.2);
+    transform: scale(1.05);
   }
 
   .hover-float {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .hover-float:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
   }
 
-  /* Stagger animations with delays */
+  /* Sophisticated stagger animations */
   .stagger-item {
     opacity: 0;
-    transform: translateY(30px);
-    animation: staggerFadeInUp 0.8s ease-out forwards;
+    transform: translateY(40px);
+    animation: staggerFadeInUp 1.0s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .stagger-item:nth-child(1) {
@@ -201,7 +201,7 @@
     animation-delay: 0.6s;
   }
 
-  /* Enhanced loading animations */
+  /* Elegant loading animations */
   .loading-spinner {
     width: 20px;
     height: 20px;
@@ -212,7 +212,7 @@
   }
 
   .loading-dots {
-    animation: loadingDots 1.4s ease-in-out infinite both;
+    animation: loadingDots 1.6s ease-in-out infinite both;
   }
 
   .loading-dots:nth-child(1) {
@@ -222,23 +222,23 @@
     animation-delay: -0.16s;
   }
 
-  /* Enhanced pulse effects */
+  /* Mesmerizing pulse effects */
   .animate-pulse-slow {
-    animation: pulseGlow 3s ease-in-out infinite;
+    animation: pulseGlow 4s ease-in-out infinite;
   }
 
   .animate-pulse-emerald {
-    animation: pulseEmerald 2s ease-in-out infinite;
+    animation: pulseEmerald 3s ease-in-out infinite;
   }
 
-  /* Enhanced shimmer effect */
+  /* Luxurious shimmer effect */
   .animate-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(5, 150, 105, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(5, 150, 105, 0.15), transparent);
     background-size: 200% 100%;
-    animation: shimmer 2s infinite;
+    animation: shimmer 2.5s infinite;
   }
 
-  /* Ripple effect for buttons */
+  /* Emotional ripple effect for buttons */
   .ripple-effect {
     position: relative;
     overflow: hidden;
@@ -253,45 +253,55 @@
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.6);
     transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), height 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .ripple-effect:active:before {
-    width: 300px;
-    height: 300px;
+    width: 400px;
+    height: 400px;
   }
 
   /* Magnetic hover effect */
   .magnetic {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Glass morphism effect */
+  /* Premium glass morphism effect */
   .glass {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
   }
 
   .glass-emerald {
-    background: rgba(5, 150, 105, 0.1);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(5, 150, 105, 0.2);
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(5, 150, 105, 0.25);
   }
 
-  /* Gradient text */
+  .dark .glass {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .glass-emerald {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(5, 150, 105, 0.4);
+  }
+
+  /* Stunning gradient text */
   .gradient-text {
-    background: linear-gradient(135deg, #059669, #10b981);
+    background: linear-gradient(135deg, #059669, #10b981, #34d399);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Floating animation */
+  /* Dreamy floating animation */
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
   }
 
   /* Typewriter effect */
@@ -301,15 +311,15 @@
     white-space: nowrap;
     margin: 0 auto;
     letter-spacing: 0.15em;
-    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+    animation: typing 4s steps(40, end), blink-caret 1s step-end infinite;
   }
 }
 
-/* Enhanced keyframe definitions with more sophisticated animations */
+/* Enhanced keyframe definitions with cinematic quality animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
@@ -320,7 +330,7 @@
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(40px);
+    transform: translateY(60px);
   }
   to {
     opacity: 1;
@@ -331,7 +341,7 @@
 @keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(-40px);
+    transform: translateY(-60px);
   }
   to {
     opacity: 1;
@@ -342,7 +352,7 @@
 @keyframes fadeInLeft {
   from {
     opacity: 0;
-    transform: translateX(-40px);
+    transform: translateX(-60px);
   }
   to {
     opacity: 1;
@@ -353,7 +363,7 @@
 @keyframes fadeInRight {
   from {
     opacity: 0;
-    transform: translateX(40px);
+    transform: translateX(60px);
   }
   to {
     opacity: 1;
@@ -364,7 +374,7 @@
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.8);
+    transform: scale(0.7);
   }
   to {
     opacity: 1;
@@ -375,7 +385,7 @@
 @keyframes scaleInCenter {
   from {
     opacity: 0;
-    transform: scale(0.7);
+    transform: scale(0.6);
   }
   to {
     opacity: 1;
@@ -386,14 +396,14 @@
 @keyframes scaleBounce {
   0% {
     opacity: 0;
-    transform: scale(0.3);
+    transform: scale(0.2);
   }
   50% {
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.15);
   }
   70% {
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
   100% {
     opacity: 1;
@@ -404,7 +414,7 @@
 @keyframes slideInLeft {
   from {
     opacity: 0;
-    transform: translateX(-60px);
+    transform: translateX(-80px);
   }
   to {
     opacity: 1;
@@ -415,7 +425,7 @@
 @keyframes slideInRight {
   from {
     opacity: 0;
-    transform: translateX(60px);
+    transform: translateX(80px);
   }
   to {
     opacity: 1;
@@ -426,7 +436,7 @@
 @keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(60px);
+    transform: translateY(80px);
   }
   to {
     opacity: 1;
@@ -437,7 +447,7 @@
 @keyframes slideInDown {
   from {
     opacity: 0;
-    transform: translateY(-60px);
+    transform: translateY(-80px);
   }
   to {
     opacity: 1;
@@ -448,11 +458,11 @@
 @keyframes bounceGentle {
   0% {
     opacity: 0;
-    transform: translateY(-15px);
+    transform: translateY(-20px);
   }
   60% {
     opacity: 1;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
   100% {
     opacity: 1;
@@ -463,14 +473,14 @@
 @keyframes bounceIn {
   0% {
     opacity: 0;
-    transform: scale(0.2);
+    transform: scale(0.1);
   }
   50% {
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.2);
   }
   70% {
-    transform: scale(0.9);
+    transform: scale(0.85);
   }
   100% {
     opacity: 1;
@@ -481,11 +491,11 @@
 @keyframes bounceSoft {
   0% {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(-15px) scale(0.9);
   }
   60% {
     opacity: 1;
-    transform: translateY(5px) scale(1.02);
+    transform: translateY(8px) scale(1.05);
   }
   100% {
     opacity: 1;
@@ -496,7 +506,7 @@
 @keyframes staggerFadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(40px);
   }
   to {
     opacity: 1;
@@ -529,12 +539,12 @@
   100% {
     opacity: 1;
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7);
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.8);
   }
   50% {
-    opacity: 0.9;
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(5, 150, 105, 0);
+    opacity: 0.85;
+    transform: scale(1.08);
+    box-shadow: 0 0 0 15px rgba(5, 150, 105, 0);
   }
 }
 
@@ -542,11 +552,11 @@
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4);
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5);
   }
   50% {
-    opacity: 0.8;
-    box-shadow: 0 0 0 15px rgba(5, 150, 105, 0);
+    opacity: 0.75;
+    box-shadow: 0 0 0 20px rgba(5, 150, 105, 0);
   }
 }
 
@@ -565,7 +575,7 @@
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(-25px);
   }
 }
 
@@ -612,20 +622,21 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar styling */
+/* Custom scrollbar styling with emerald theme */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
   background: hsl(var(--muted));
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary));
-  border-radius: 4px;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--accent));
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
 }
