@@ -4,24 +4,14 @@ import { sendEmail, generateVerificationCode, createVerificationEmailHTML } from
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, firstname, lastname, company } = await request.json()
+    const { email, password, firstname, lastname } = await request.json()
 
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return NextResponse.json({ error: "Email and password are required and must be strings" }, { status: 400 })
     }
 
-    if (
-      !firstname ||
-      !lastname ||
-      !company ||
-      typeof firstname !== "string" ||
-      typeof lastname !== "string" ||
-      typeof company !== "string"
-    ) {
-      return NextResponse.json(
-        { error: "First name, last name, and company are required and must be strings" },
-        { status: 400 },
-      )
+    if (!firstname || !lastname || typeof firstname !== "string" || typeof lastname !== "string") {
+      return NextResponse.json({ error: "First name and last name are required and must be strings" }, { status: 400 })
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -79,9 +69,8 @@ export async function POST(request: NextRequest) {
     const sanitizedEmail = email.trim().toLowerCase()
     const sanitizedFirstname = firstname.trim()
     const sanitizedLastname = lastname.trim()
-    const sanitizedCompany = company.trim()
 
-    const user = await createUser(sanitizedEmail, password, sanitizedFirstname, sanitizedLastname, sanitizedCompany)
+    const user = await createUser(sanitizedEmail, password, sanitizedFirstname, sanitizedLastname)
     if (!user) {
       return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
     }

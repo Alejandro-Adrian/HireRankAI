@@ -200,7 +200,9 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
           >
             <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
             <h3 className="text-sm font-medium text-foreground mb-1">Resume/CV *</h3>
-            <p className="text-xs text-muted-foreground mb-3">PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB) - Required</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 mb-3">
+              PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB) - Required
+            </p>
             <input
               type="file"
               accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
@@ -222,7 +224,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
           >
             <Award className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
             <h3 className="text-sm font-medium text-foreground mb-1">Certificates</h3>
-            <p className="text-xs text-muted-foreground mb-3">PDF, JPG, PNG (Max 10MB each)</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 mb-3">PDF, JPG, PNG (Max 10MB each)</p>
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
@@ -245,7 +247,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
           >
             <Briefcase className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
             <h3 className="text-sm font-medium text-foreground mb-1">Portfolio</h3>
-            <p className="text-xs text-muted-foreground mb-3">PDF, JPG, PNG (Max 10MB each)</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 mb-3">PDF, JPG, PNG (Max 10MB each)</p>
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
@@ -268,7 +270,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
           >
             <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
             <h3 className="text-sm font-medium text-foreground mb-1">Other Documents</h3>
-            <p className="text-xs text-muted-foreground mb-3">Any format (Max 10MB each)</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 mb-3">Any format (Max 10MB each)</p>
             <input
               type="file"
               multiple
@@ -299,7 +301,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium text-foreground">{fileUpload.file.name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
+                      <p className="text-xs text-slate-700 dark:text-slate-300 capitalize">
                         {fileUpload.category} • {(fileUpload.file.size / 1024 / 1024).toFixed(2)} MB
                         {fileUpload.category === "resume" && (
                           <span className="text-primary font-medium"> (Required)</span>

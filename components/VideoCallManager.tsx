@@ -104,7 +104,7 @@ export default function VideoCallManager({ rankings, onBack, onNotification, use
   }
 
   const generateMeetingId = () => {
-    return "meeting-" + Math.random().toString(36).substring(2, 15) + "-" + Date.now().toString(36)
+    return "meeting-" + Math.random().toString(36).substring(2, 15)
   }
 
   const createSession = async () => {
@@ -114,7 +114,7 @@ export default function VideoCallManager({ rankings, onBack, onNotification, use
     }
 
     const meetingId = generateMeetingId()
-    const meetingUrl = `${window.location.origin}/video-call/${meetingId}`
+    const meetingUrl = `${window.location.origin}/video-call/${meetingId}?role=host`
 
     let scheduledAt = null
     if (scheduledDate && scheduledTime) {
@@ -348,7 +348,7 @@ export default function VideoCallManager({ rankings, onBack, onNotification, use
                         className="flex-1 sm:flex-none flex items-center justify-center space-x-1 px-3 py-2 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-all duration-200 hover:scale-105 text-sm"
                       >
                         <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span>Join</span>
+                        <span>Join as Host</span>
                       </button>
                       <button
                         onClick={() => deleteSession(session.id)}

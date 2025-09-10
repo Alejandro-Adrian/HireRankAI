@@ -46,10 +46,18 @@ export async function POST(request: NextRequest) {
       const position = application.rankings?.title || application.rankings?.position || "Position"
       const scheduledTime = session.scheduled_at ? new Date(session.scheduled_at).toLocaleString() : undefined
 
+      const participantUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/video-call/${session.meeting_id}`
+
       const emailResult = await sendEmail({
         to: candidateEmail,
         subject: `📹 Video Interview Invitation - ${session.title}`,
-        html: createVideoCallInvitationEmailHTML(candidateName, position, session.meeting_url, scheduledTime),
+        html: createVideoCallInvitationEmailHTML(
+          candidateName,
+          position,
+          participantUrl,
+          scheduledTime,
+          session.meeting_id,
+        ),
       })
 
       return emailResult
