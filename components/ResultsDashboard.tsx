@@ -23,6 +23,7 @@ import {
   XCircle,
   AlertCircle,
   RefreshCw,
+  X,
 } from "lucide-react"
 
 interface Application {
@@ -56,6 +57,8 @@ interface ResultsDashboardProps {
   onBack?: () => void
   onNotification?: (message: string, type: "success" | "error" | "info") => void
 }
+
+import { Button } from "@/components/ui/button"
 
 export default function ResultsDashboard({ rankingId, onBack, onNotification }: ResultsDashboardProps) {
   const [applications, setApplications] = useState<Application[]>([])
@@ -92,6 +95,9 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   const [resendingInvitation, setResendingInvitation] = useState<string | null>(null)
   const [ranking, setRanking] = useState<any>({})
 
+  const [showScoringModal, setScoringModal] = useState(false)
+  const [selectedApplicationForScoring, setSelectedApplicationForScoring] = useState<any>(null)
+
   useEffect(() => {
     fetchApplications()
     fetchRanking()
@@ -103,7 +109,9 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
       const response = await fetch(`/api/rankings/${rankingId}/applications`)
       if (response.ok) {
         const data = await response.json()
-        setApplications(data.applications || [])
+        setApplications(data || [])
+
+        await calculateRankings(data || [])
       } else {
         onNotification?.("Failed to fetch applications", "error")
       }
@@ -112,6 +120,49 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
       onNotification?.("Error occurred while fetching applications", "error")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const calculateRankings = async (apps: Application[]) => {
+    try {
+      // Filter only scored applications and sort by total_score descending
+      const scoredApps = apps
+        .filter((app) => app.total_score && app.total_score > 0)
+        .sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
+
+      if (scoredApps.length === 0) {
+        return
+      }
+
+      // Calculate rankings and update database
+      const updates = scoredApps.map((app, index) => ({
+        id: app.id,
+        rank_position: index + 1,
+      }))
+
+      // Update each application's rank_position
+      for (const update of updates) {
+        const response = await fetch(`/api/applications/${update.id}/rank`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ rank_position: update.rank_position }),
+        })
+
+        if (!response.ok) {
+          console.error(`Failed to update rank for application ${update.id}`)
+        }
+      }
+
+      // Refresh applications to show updated rankings
+      const refreshResponse = await fetch(`/api/rankings/${rankingId}/applications`)
+      if (refreshResponse.ok) {
+        const refreshedData = await refreshResponse.json()
+        setApplications(refreshedData || [])
+      }
+    } catch (error) {
+      console.error("Error calculating rankings:", error)
     }
   }
 
@@ -314,7 +365,7 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   const handleDeleteApplication = async (applicationId: string) => {
     setIsDeleting(true)
     try {
-      const response = await fetch(`/api/applications/${applicationId}`, {
+      const response = await fetch(`/api/applications/${applicationId}/delete`, {
         method: "DELETE",
       })
 
@@ -454,7 +505,7 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   }
 
   const getDisplayRank = (application: Application) => {
-    return application.rank || 999
+    return application.rank_position || 999
   }
 
   const filteredApplications = useMemo(() => {
@@ -486,7 +537,7 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case "rank":
-          return (a.rank || 999) - (b.rank || 999)
+          return (a.rank_position || 999) - (b.rank_position || 999)
         case "score-high":
           return (b.total_score || 0) - (a.total_score || 0)
         case "score-low":
@@ -529,6 +580,11 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
         : 0,
   }
 
+  const handleShowScoring = (application: any) => {
+    setSelectedApplicationForScoring(application)
+    setScoringModal(true)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -559,9 +615,9 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                 <div className="h-6 w-px bg-border"></div>
                 <h1 className="text-2xl font-bold text-foreground">{selectedApplication.applicant_name}</h1>
                 <span
-                  className={`px-3 py-1 text-sm font-medium rounded-full border ${getRankBadgeColor(selectedApplication.rank)}`}
+                  className={`px-3 py-1 text-sm font-medium rounded-full border ${getRankBadgeColor(selectedApplication.rank_position)}`}
                 >
-                  Rank #{selectedApplication.rank}
+                  Rank #{selectedApplication.rank_position}
                 </span>
                 {selectedApplication.selected_for_interview && (
                   <span className="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 border border-green-300">
@@ -1068,12 +1124,15 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => setSelectedApplication(application)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        {/* Update the View button to show detailed scoring */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleShowScoring(application)}
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:text-emerald-300 dark:hover:bg-emerald-900/20 transition-all duration-200"
                         >
                           View
-                        </button>
+                        </Button>
                         {!application.selected_for_interview &&
                           application.status !== "rejected" &&
                           application.status !== "approved" &&
@@ -1259,6 +1318,336 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
               >
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showScoringModal && selectedApplicationForScoring && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-scale-in duration-500 hover-lift">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-500/20 animate-shimmer"></div>
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="animate-slide-in-left">
+                  <h2 className="text-2xl font-bold font-work-sans">{selectedApplicationForScoring.applicant_name}</h2>
+                  <p className="text-emerald-100 font-open-sans">{selectedApplicationForScoring.applicant_email}</p>
+                </div>
+                <button
+                  onClick={() => setScoringModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-full transition-all duration-300 hover:scale-110 hover:rotate-90 animate-slide-in-right"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Application Details */}
+                <div className="space-y-6 animate-slide-in-left">
+                  <div className="glass-emerald rounded-xl p-4 hover-lift transition-all duration-300">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 font-work-sans flex items-center">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse-emerald"></div>
+                      Application Details
+                    </h3>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between items-center p-2 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-all duration-200">
+                        <span className="text-gray-600 dark:text-gray-400 font-open-sans">Applied:</span>
+                        <span className="font-medium font-work-sans">
+                          {new Date(selectedApplicationForScoring.submitted_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-all duration-200">
+                        <span className="text-gray-600 dark:text-gray-400 font-open-sans">Status:</span>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 ${
+                            selectedApplicationForScoring.status === "approved"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
+                              : selectedApplicationForScoring.status === "rejected"
+                                ? "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
+                          }`}
+                        >
+                          {selectedApplicationForScoring.status}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-all duration-200">
+                        <span className="text-gray-600 dark:text-gray-400 font-open-sans">Rank:</span>
+                        <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400 animate-bounce-gentle">
+                          #{selectedApplicationForScoring.rank}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-all duration-200">
+                        <span className="text-gray-600 dark:text-gray-400 font-open-sans">Score:</span>
+                        <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400 animate-bounce-gentle">
+                          {selectedApplicationForScoring.total_score}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Application Files */}
+                  {selectedApplicationForScoring.application_files &&
+                    selectedApplicationForScoring.application_files.length > 0 && (
+                      <div
+                        className="glass-emerald rounded-xl p-4 hover-lift transition-all duration-300 animate-fade-in-up"
+                        style={{ animationDelay: "0.1s" }}
+                      >
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 font-work-sans flex items-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                          Application Files
+                        </h3>
+                        <div className="space-y-2">
+                          {selectedApplicationForScoring.application_files.map((file: any, index: number) => (
+                            <div
+                              key={file.id}
+                              className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-300 hover:scale-[1.02] animate-slide-in-right"
+                              style={{ animationDelay: `${index * 0.1}s` }}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                                  <svg
+                                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 font-work-sans">
+                                    {file.file_name}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 font-open-sans">
+                                    {file.file_category}
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => window.open(file.file_url, "_blank")}
+                                className="flex items-center space-x-1 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 text-sm transition-all duration-300 hover:scale-110 hover-glow"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
+                                </svg>
+                                <span>View</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* OCR Transcript */}
+                  {selectedApplicationForScoring.ocr_transcript && (
+                    <div
+                      className="glass-emerald rounded-xl p-4 hover-lift transition-all duration-300 animate-fade-in-up"
+                      style={{ animationDelay: "0.2s" }}
+                    >
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 font-work-sans flex items-center">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></div>
+                        Application Content
+                      </h3>
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 max-h-48 overflow-y-auto hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300">
+                        <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-open-sans leading-relaxed">
+                          {selectedApplicationForScoring.ocr_transcript}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Scoring Breakdown */}
+                <div className="space-y-6 animate-slide-in-right">
+                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800 hover-lift transition-all duration-300">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 font-work-sans flex items-center">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse-emerald"></div>
+                      Scoring Breakdown
+                    </h3>
+
+                    {/* Overall Score */}
+                    <div className="mb-6 animate-scale-in">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 font-work-sans">
+                          Overall Score
+                        </span>
+                        <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 animate-bounce-gentle">
+                          {selectedApplicationForScoring.total_score}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-4 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-emerald-500 to-teal-500 h-4 rounded-full transition-all duration-1000 ease-out animate-shimmer"
+                          style={{ width: `${selectedApplicationForScoring.total_score}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Individual Criteria */}
+                    {selectedApplicationForScoring.scores && (
+                      <div className="space-y-4">
+                        {(() => {
+                          try {
+                            const scores =
+                              typeof selectedApplicationForScoring.scores === "string"
+                                ? JSON.parse(selectedApplicationForScoring.scores)
+                                : selectedApplicationForScoring.scores
+
+                            return Object.entries(scores).map(([criteria, score], index) => (
+                              <div
+                                key={index}
+                                className="mb-4 animate-fade-in-up hover-lift transition-all duration-300"
+                                style={{ animationDelay: `${index * 0.1}s` }}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize font-work-sans">
+                                    {criteria.replace(/_/g, " ")}
+                                  </span>
+                                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                    {score}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all duration-700 ease-out"
+                                    style={{
+                                      width: `${score}%`,
+                                      animationDelay: `${index * 0.2}s`,
+                                    }}
+                                  ></div>
+                                </div>
+                              </div>
+                            ))
+                          } catch (error) {
+                            console.log("[v0] Error parsing scores:", error)
+                            return (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                No detailed scoring available
+                              </div>
+                            )
+                          }
+                        })()}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Score Breakdown Details */}
+                  {selectedApplicationForScoring.score_breakdown && (
+                    <div
+                      className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800 hover-lift transition-all duration-300 animate-fade-in-up"
+                      style={{ animationDelay: "0.3s" }}
+                    >
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 font-work-sans flex items-center">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
+                        Detailed Analysis
+                      </h3>
+                      <div className="space-y-3">
+                        {(() => {
+                          try {
+                            const breakdown =
+                              typeof selectedApplicationForScoring.score_breakdown === "string"
+                                ? JSON.parse(selectedApplicationForScoring.score_breakdown)
+                                : selectedApplicationForScoring.score_breakdown
+
+                            return Object.entries(breakdown).map(([key, value], index) => (
+                              <div
+                                key={key}
+                                className="p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-300 animate-slide-in-left"
+                                style={{ animationDelay: `${index * 0.1}s` }}
+                              >
+                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 font-work-sans capitalize">
+                                  {key.replace(/_/g, " ")}
+                                </div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400 font-open-sans">
+                                  {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}
+                                </div>
+                              </div>
+                            ))
+                          } catch (error) {
+                            console.log("[v0] Error parsing score breakdown:", error)
+                            return (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                No detailed breakdown available
+                              </div>
+                            )
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedApplicationForScoring.ocr_transcript && (
+                    <div
+                      className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800 hover-lift transition-all duration-300 animate-fade-in-up"
+                      style={{ animationDelay: "0.5s" }}
+                    >
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 font-work-sans flex items-center">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse"></div>
+                        Keyword Analysis
+                      </h3>
+                      <div className="space-y-3">
+                        {(() => {
+                          const transcript = selectedApplicationForScoring.ocr_transcript.toLowerCase()
+                          const keywords = [
+                            "experience",
+                            "skills",
+                            "education",
+                            "certification",
+                            "leadership",
+                            "management",
+                            "project",
+                            "team",
+                            "communication",
+                            "problem solving",
+                            "analytical",
+                            "creative",
+                            "innovative",
+                            "collaborative",
+                            "detail oriented",
+                          ]
+
+                          const foundKeywords = keywords.filter((keyword) => transcript.includes(keyword.toLowerCase()))
+
+                          return (
+                            <div>
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {foundKeywords.map((keyword, index) => (
+                                  <span
+                                    key={keyword}
+                                    className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-xs font-medium animate-fade-in-up hover:scale-105 transition-all duration-300"
+                                    style={{ animationDelay: `${index * 0.05}s` }}
+                                  >
+                                    {keyword}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">
+                                Found {foundKeywords.length} relevant keywords out of {keywords.length} analyzed
+                              </div>
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

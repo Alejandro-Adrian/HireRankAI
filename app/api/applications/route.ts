@@ -1,22 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { put } from "@vercel/blob"
 import { simpleResumeParser } from "@/lib/simple-resume-parser"
+import { duplicateDetectionService } from "@/lib/duplicate-detection"
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[v0] Starting application submission process")
+    console.log("Starting application submission process")
 
     let supabase
     try {
       supabase = createClient()
-      console.log("[v0] Supabase client created successfully")
+      console.log("Supabase client created successfully")
 
       // Test database connection
       const { data: testQuery, error: testError } = await supabase.from("rankings").select("count").limit(1)
 
       if (testError) {
-        console.error("[v0] Database connection test failed:", testError)
+        console.error("Database connection test failed:", testError)
         return NextResponse.json(
           {
             error: "Database connection failed",
@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      console.log("[v0] Database connection verified")
+      console.log("Database connection verified")
     } catch (clientError) {
-      console.error("[v0] Failed to create Supabase client:", clientError)
+      console.error("Failed to create Supabase client:", clientError)
       return NextResponse.json(
         {
           error: "Database client initialization failed",
@@ -40,16 +40,16 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
 
-    console.log("[v0] Processing application submission")
+    console.log("Processing application submission")
 
     const ranking_id = formData.get("ranking_id") as string
 
     if (!ranking_id) {
-      console.error("[v0] Missing ranking ID")
+      console.error("Missing ranking ID")
       return NextResponse.json({ error: "Missing ranking ID" }, { status: 400 })
     }
 
-    console.log("[v0] Ranking ID:", ranking_id)
+    console.log("Ranking ID:", ranking_id)
 
     // Process uploaded files
     const fileEntries = Array.from(formData.entries()).filter(
@@ -73,16 +73,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (!resumeFile) {
-      console.error("[v0] No resume file found")
+      console.error("No resume file found")
       return NextResponse.json({ error: "Resume file is required" }, { status: 400 })
     }
 
-    console.log(`[v0] Found ${allFiles.length} files, including resume: ${resumeFile.name}`)
+    console.log(`Found ${allFiles.length} files, including resume: ${resumeFile.name}`)
 
     let resumeData
     try {
-      console.log("[v0] Starting resume parsing with new OCR system...")
-      console.log("[v0] Resume file details:", {
+      console.log("Starting resume parsing...")
+      console.log("Resume file details:", {
         name: resumeFile.name,
         size: resumeFile.size,
         type: resumeFile.type,
@@ -90,11 +90,11 @@ export async function POST(request: NextRequest) {
 
       resumeData = await simpleResumeParser.parseFromFile(resumeFile)
 
-      console.log("[v0] Resume parsing completed successfully")
-      console.log("[v0] Parsed resume data:", resumeData)
+      console.log("Resume parsing completed successfully")
+      console.log("Parsed resume data:", resumeData)
 
       if (!resumeData.applicant_name || resumeData.applicant_name === "Name Not Found") {
-        console.error("[v0] Resume parsing incomplete - no name found")
+        console.error("Resume parsing incomplete - no name found")
         return NextResponse.json(
           {
             error: "Failed to extract information from resume",
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         )
       }
     } catch (parseError) {
-      console.error("[v0] Resume parsing failed:", parseError)
+      console.error("Resume parsing failed:", parseError)
 
       if (parseError.message.includes("PDF processing failed") && allFiles.length > 1) {
         return NextResponse.json(
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify ranking exists and is active
-    console.log("[v0] Validating ranking...")
+    console.log("Validating ranking...")
     const { data: ranking, error: rankingError } = await supabase
       .from("rankings")
       .select("id, is_active, title")
@@ -136,13 +136,61 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (rankingError || !ranking) {
-      console.error("[v0] Ranking validation failed:", rankingError)
+      console.error("Ranking validation failed:", rankingError)
       return NextResponse.json({ error: "Invalid or inactive ranking" }, { status: 400 })
     }
 
-    console.log("[v0] Validated ranking:", ranking.title)
+    console.log("Validated ranking:", ranking.title)
 
-    console.log("[v0] Creating application record...")
+    console.log("Performing comprehensive duplicate detection...")
+
+    // Get all existing applications for this ranking
+    const { data: existingApplications, error: fetchError } = await supabase
+      .from("applications")
+      .select("id, applicant_name, applicant_email, applicant_phone, applicant_city")
+      .eq("ranking_id", ranking_id)
+
+    if (fetchError) {
+      console.error("Error fetching existing applications:", fetchError)
+      return NextResponse.json(
+        {
+          error: "Failed to check for duplicates",
+          details: fetchError.message,
+        },
+        { status: 500 },
+      )
+    }
+
+    if (existingApplications && existingApplications.length > 0) {
+      const duplicateResult = await duplicateDetectionService.checkDuplicate(
+        {
+          applicant_name: resumeData.applicant_name,
+          applicant_email: resumeData.applicant_email,
+          applicant_phone: resumeData.applicant_phone,
+          applicant_city: resumeData.applicant_city,
+        },
+        existingApplications,
+      )
+
+      if (duplicateResult.isDuplicate) {
+        console.log("Duplicate detected with confidence:", duplicateResult.confidence)
+        console.log("Matched fields:", duplicateResult.matchedFields)
+
+        return NextResponse.json(
+          {
+            error: "Duplicate application detected",
+            details: `A very similar application already exists for this position. Matched fields: ${duplicateResult.matchedFields.join(", ")}. Confidence: ${Math.round(duplicateResult.confidence * 100)}%`,
+            confidence: duplicateResult.confidence,
+            matchedFields: duplicateResult.matchedFields,
+          },
+          { status: 409 },
+        )
+      }
+    }
+
+    console.log("No duplicates found, proceeding with application creation")
+
+    // Creating application record...
     const applicationData = {
       ranking_id,
       applicant_name: resumeData.applicant_name,
@@ -159,13 +207,13 @@ export async function POST(request: NextRequest) {
       ocr_transcript: resumeData.raw_text || null,
     }
 
-    console.log("[v0] Application data to insert:", JSON.stringify(applicationData, null, 2))
+    console.log("Application data to insert:", JSON.stringify(applicationData, null, 2))
 
     const requiredFields = ["ranking_id", "applicant_name", "status", "submitted_at"]
     const missingFields = requiredFields.filter((field) => !applicationData[field])
 
     if (missingFields.length > 0) {
-      console.error("[v0] Missing required fields for application:", missingFields)
+      console.error("Missing required fields for application:", missingFields)
       return NextResponse.json(
         {
           error: "Missing required application data",
@@ -182,8 +230,8 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (applicationError) {
-      console.error("[v0] Error creating application:", applicationError)
-      console.error("[v0] Application error details:", JSON.stringify(applicationError, null, 2))
+      console.error("Error creating application:", applicationError)
+      console.error("Application error details:", JSON.stringify(applicationError, null, 2))
 
       if (applicationError.code === "23505") {
         return NextResponse.json(
@@ -213,25 +261,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("[v0] Created application:", application.id)
+    console.log("Created application:", application.id)
 
-    // Upload files to Vercel Blob
+    // Upload files to Supabase Storage
     const uploadedFiles: any[] = []
 
     for (const { file, category } of allFiles) {
       try {
         // Validate file size (10MB limit)
         if (file.size > 10 * 1024 * 1024) {
-          console.warn(`[v0] File ${file.name} exceeds size limit, skipping`)
+          console.warn(`File ${file.name} exceeds size limit, skipping`)
           continue
         }
 
         const fileName = `applications/${application.id}/${category}/${Date.now()}-${file.name}`
-        console.log(`[v0] Uploading file: ${fileName}`)
+        console.log(`Uploading file: ${fileName}`)
 
-        const blob = await put(fileName, file, {
-          access: "public",
-        })
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("application-files")
+          .upload(fileName, file, {
+            cacheControl: "3600",
+            upsert: false,
+          })
+
+        if (uploadError) {
+          console.error(`Error uploading file ${file.name}:`, uploadError)
+          continue
+        }
+
+        // Get public URL
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("application-files").getPublicUrl(fileName)
 
         const { data: fileRecord, error: fileError } = await supabase
           .from("application_files")
@@ -240,7 +302,7 @@ export async function POST(request: NextRequest) {
             file_name: file.name,
             file_type: file.type,
             file_size: file.size,
-            file_url: blob.url,
+            file_url: publicUrl,
             file_category: category,
             uploaded_at: new Date().toISOString(),
           })
@@ -248,33 +310,33 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (fileError) {
-          console.error("[v0] Error saving file info:", fileError)
+          console.error("Error saving file info:", fileError)
         } else {
           uploadedFiles.push(fileRecord)
-          console.log(`[v0] Successfully uploaded: ${file.name}`)
+          console.log(`Successfully uploaded: ${file.name}`)
         }
       } catch (error) {
-        console.error(`[v0] Error processing file ${file.name}:`, error)
+        console.error(`Error processing file ${file.name}:`, error)
       }
     }
 
-    console.log(`[v0] Successfully uploaded ${uploadedFiles.length} files`)
+    console.log(`Successfully uploaded ${uploadedFiles.length} files`)
 
-    console.log("[v0] Starting automatic scoring process")
+    console.log("Starting automatic scoring process")
     try {
       const { directScoringService } = await import("@/lib/direct-scoring-service")
 
-      console.log("[v0] Attempting to score application:", application.id)
+      console.log("Attempting to score application:", application.id)
       const scoringResult = await directScoringService.scoreApplication(application.id)
 
       if (scoringResult) {
-        console.log("[v0] Application scored successfully with direct scoring service")
+        console.log("Application scored successfully")
       } else {
-        console.error("[v0] Direct scoring failed: No result returned")
+        console.error("Direct scoring failed: No result returned")
         // Don't fail the entire application if scoring fails
       }
     } catch (scoringError) {
-      console.error("[v0] Scoring service error:", scoringError)
+      console.error("Scoring service error:", scoringError)
       // Continue without failing - scoring can be done manually later
     }
 
@@ -293,8 +355,8 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     )
   } catch (error) {
-    console.error("[v0] Error in applications API:", error)
-    console.error("[v0] Error stack:", error.stack)
+    console.error("Error in applications API:", error)
+    console.error("Error stack:", error.stack)
     return NextResponse.json(
       {
         error: "Internal server error",

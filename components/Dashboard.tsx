@@ -133,6 +133,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     try {
       const response = await fetch(`/api/rankings/${ranking.id}`, {
         method: "DELETE",
+        credentials: "include",
       })
 
       if (response.ok) {

@@ -1,34 +1,129 @@
-# Authentication System
+# HireRankerAI - AI-Powered Hiring Platform
+
+## Overview
+HireRankerAI is a comprehensive hiring management system that uses AI to rank and score job applicants automatically. The platform includes resume parsing, duplicate detection, video interviews, and intelligent candidate scoring.
+
+## Features
+- **AI-Powered Resume Parsing**: Automatically extract candidate information from resumes
+- **Intelligent Scoring System**: Score candidates based on customizable criteria
+- **Duplicate Detection**: Prevent duplicate applications with smart matching
+- **Video Interview Integration**: Built-in video calling capabilities
+- **Real-time Dashboard**: Track applications and manage hiring pipelines
+- **File Management**: Secure file upload and storage for resumes and documents
 
 ## Local Development Setup
 
-To run this project locally, you need to set up your environment variables:
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database (Supabase recommended)
+- SMTP email service (Gmail recommended)
 
-1. Copy `.env.local.example` to `.env.local`:
+### Installation
+1. Clone the repository:
+   \`\`\`bash
+   git clone <repository-url>
+   cd hireranker-ai
+   \`\`\`
+
+2. Install dependencies:
+   \`\`\`bash
+   npm install
+   \`\`\`
+
+3. Set up environment variables:
    \`\`\`bash
    cp .env.local.example .env.local
    \`\`\`
 
-2. Fill in your Supabase credentials in `.env.local`:
+4. Configure your environment variables in `.env.local`:
    - Get your Supabase URL and keys from your Supabase project dashboard
    - Add your email credentials for SMTP (Gmail app password recommended)
 
-3. Make sure your Supabase database has the required tables (run the SQL scripts if needed)
+5. Set up the database:
+   - Run `scripts/setup_database.sql` in your Supabase SQL editor
+   - This creates all necessary tables and functions
 
-## Troubleshooting
-
-If you get "Internal server error" during email verification:
-
-1. **Check Environment Variables**: Ensure all Supabase variables are set in `.env.local`
-2. **Check Database Connection**: Verify your Supabase project is active and accessible
-3. **Check Email Configuration**: Ensure EMAIL_USER and EMAIL_PASS are correct
-4. **Check Console Logs**: Look for `[v0]` debug messages in your terminal
+6. Start the development server:
+   \`\`\`bash
+   npm run dev
+   \`\`\`
 
 ## Required Environment Variables
 
+### Database Configuration
 - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key  
 - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key
+
+### Email Configuration
 - `EMAIL_USER` - Your Gmail address
 - `EMAIL_PASS` - Your Gmail app password
+
+### Application Settings
 - `NEXT_PUBLIC_SITE_URL` - Your site URL (http://localhost:3000 for local)
+
+## Database Scripts
+
+### Setup Database
+Run `scripts/setup_database.sql` to create all necessary tables, indexes, and functions.
+
+### Reset Database
+Run `scripts/reset_database.sql` to clear all data while preserving table structure (useful for fresh deployments).
+
+## Deployment
+See `DEPLOYMENT.md` for comprehensive deployment instructions for various hosting platforms including Render, Railway, Heroku, and custom servers.
+
+## Troubleshooting
+
+### Common Issues
+
+#### Database Connection Errors
+- Verify Supabase credentials in environment variables
+- Check that your Supabase project is active
+- Ensure database tables are created using the setup script
+
+#### Email Not Sending
+- Verify Gmail app password is correct
+- Check SMTP settings
+- Ensure 2FA is enabled on Gmail account
+
+#### File Upload Issues
+- Check Supabase Storage bucket configuration
+- Verify file size limits (10MB max)
+- Ensure proper permissions on storage bucket
+
+#### Application Scoring Issues
+- Verify all required criteria are configured
+- Check that scoring weights are properly set
+- Review application logs for scoring errors
+
+## Architecture
+
+### Backend
+- **Next.js 14** with App Router
+- **Supabase** for database and authentication
+- **Node.js** server with WebSocket support
+- **TypeScript** for type safety
+
+### Frontend
+- **React 18** with modern hooks
+- **Tailwind CSS** for styling
+- **Radix UI** components
+- **Lucide React** icons
+
+### Key Libraries
+- **@supabase/supabase-js** - Database client
+- **react-hook-form** - Form management
+- **zod** - Schema validation
+- **recharts** - Data visualization
+- **nodemailer** - Email sending
+
+## Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+This project is proprietary software. All rights reserved.
