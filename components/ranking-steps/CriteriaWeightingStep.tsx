@@ -52,8 +52,8 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
 
   const getImportanceColor = (weight: number) => {
     if (weight <= 20) return "text-gray-500"
-    if (weight <= 40) return "text-yellow-600"
-    if (weight <= 60) return "text-blue-600"
+    if (weight <= 40) return "text-amber-600"
+    if (weight <= 60) return "text-emerald-600"
     if (weight <= 80) return "text-orange-600"
     return "text-red-600"
   }
@@ -94,9 +94,9 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
   return (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-blue-50 dark:bg-blue-950/50 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-        <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Set Criteria Importance</h4>
-        <p className="text-sm text-blue-800 dark:text-blue-200">
+      <div className="backdrop-blur-sm bg-emerald-50/80 dark:bg-emerald-900/30 p-4 rounded-xl border border-emerald-200/50 dark:border-emerald-800/50 animate-fade-in-up shadow-lg">
+        <h4 className="font-medium text-emerald-900 dark:text-emerald-100 mb-2">Set Criteria Importance</h4>
+        <p className="text-sm text-emerald-800 dark:text-emerald-200">
           Drag the sliders to adjust how important each criteria is for evaluating applicants. Higher values mean the
           criteria will have more impact on the final ranking.
         </p>
@@ -104,15 +104,21 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
 
       {/* Weight Controls */}
       <div className="space-y-6">
-        {data.selectedCriteria.map((criteriaId) => {
+        {data.selectedCriteria.map((criteriaId, index) => {
           const Icon = criteriaIcons[criteriaId]
           const weight = data.criteriaWeights[criteriaId] || 50
 
           return (
-            <Card key={criteriaId} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <Card
+              key={criteriaId}
+              className="backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-white/20 dark:border-gray-700/50 shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.02] animate-slide-in-up"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <div className="p-3 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/50 dark:to-teal-900/50 rounded-xl shadow-lg backdrop-blur-sm">
+                    <Icon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900 dark:text-gray-100">{criteriaLabels[criteriaId]}</h3>
                     {criteriaId === "area_living" && data.areaLivingCity && (
@@ -120,7 +126,9 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{weight}%</div>
+                    <div className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+                      {weight}%
+                    </div>
                     <div className={`text-sm font-medium ${getImportanceColor(weight)} dark:brightness-125`}>
                       {getImportanceLabel(weight)}
                     </div>
@@ -138,7 +146,7 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
                     max={100}
                     min={0}
                     step={5}
-                    className="w-full"
+                    className="w-full [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-emerald-500 [&_[role=slider]]:to-teal-500 [&_[role=slider]]:border-0 [&_[role=slider]]:shadow-lg [&_[role=slider]]:shadow-emerald-500/30 [&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-emerald-500 [&_.bg-primary]:to-teal-500"
                   />
                   <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500">
                     <span>0%</span>
@@ -155,7 +163,7 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
       </div>
 
       {/* Weight Summary */}
-      <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+      <Card className="backdrop-blur-sm bg-gray-50/80 dark:bg-gray-800/80 border-white/20 dark:border-gray-700/50 shadow-lg animate-fade-in-up">
         <CardContent className="p-4">
           <div className="flex justify-between items-center">
             <div>
@@ -175,7 +183,7 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
                   variant="outline"
                   size="sm"
                   onClick={handleRoundOff}
-                  className="text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50 bg-transparent"
+                  className="text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-700/50 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 bg-transparent"
                 >
                   Round Off to 100%
                 </Button>
@@ -191,7 +199,7 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
                   })
                   onUpdate({ criteriaWeights: newWeights })
                 }}
-                className="border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 backdrop-blur-sm transition-all duration-300 hover:scale-105"
               >
                 Reset to Equal Weights
               </Button>
@@ -201,16 +209,19 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
       </Card>
 
       {/* Navigation */}
-      <div className="flex justify-between">
+      <div className="flex justify-between animate-fade-in-up">
         <Button
           variant="outline"
           onClick={onPrev}
-          className="flex items-center gap-2 bg-transparent border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+          className="flex items-center gap-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 border-emerald-200/50 dark:border-emerald-700/50 hover:bg-emerald-50/80 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-lg px-6 py-2.5"
         >
           <ArrowLeft className="w-4 h-4" />
           Previous
         </Button>
-        <Button onClick={onNext} className="flex items-center gap-2">
+        <Button
+          onClick={onNext}
+          className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/30 rounded-lg px-6 py-2.5 font-medium"
+        >
           Next: Review & Generate
           <ArrowRight className="w-4 h-4" />
         </Button>

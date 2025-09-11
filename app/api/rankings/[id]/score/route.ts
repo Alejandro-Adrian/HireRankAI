@@ -78,28 +78,37 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     if (scoredCount > 0) {
-      console.log(`[v0] Updating rankings for ${scoredCount} applications`)
+      console.log(`[v0] Updating rankings for all scored applications`)
 
-      const { data: scoredApplications, error: fetchError } = await supabase
+      // Fetch ALL scored applications for this ranking, not just the ones we just scored
+      const { data: allScoredApplications, error: fetchError } = await supabase
         .from("applications")
         .select("id, total_score, applicant_name")
         .eq("ranking_id", params.id)
+        .eq("status", "scored") // Only get scored applications
         .not("total_score", "is", null)
         .order("total_score", { ascending: false })
 
-      if (!fetchError && scoredApplications) {
-        for (let i = 0; i < scoredApplications.length; i++) {
+      if (!fetchError && allScoredApplications) {
+        console.log(`[v0] Found ${allScoredApplications.length} scored applications to rank`)
+
+        // Update rank_position for all scored applications
+        for (let i = 0; i < allScoredApplications.length; i++) {
           const { error: rankError } = await supabase
             .from("applications")
-            .update({ rank: i + 1 })
-            .eq("id", scoredApplications[i].id)
+            .update({ rank_position: i + 1 })
+            .eq("id", allScoredApplications[i].id)
 
           if (rankError) {
-            console.error(`[v0] Error updating rank for ${scoredApplications[i].applicant_name}:`, rankError)
+            console.error(`[v0] Error updating rank for ${allScoredApplications[i].applicant_name}:`, rankError)
+          } else {
+            console.log(`[v0] Updated rank for ${allScoredApplications[i].applicant_name}: ${i + 1}`)
           }
         }
 
-        console.log(`[v0] Updated rankings for ${scoredApplications.length} applications`)
+        console.log(`[v0] Updated rankings for ${allScoredApplications.length} applications`)
+      } else {
+        console.error(`[v0] Error fetching scored applications:`, fetchError)
       }
     }
 

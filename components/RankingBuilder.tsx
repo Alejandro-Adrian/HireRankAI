@@ -17,9 +17,13 @@ interface RankingBuilderProps {
 }
 
 const JOB_POSITIONS = [
-  { value: "kitchen helper", label: "Kitchen Helper" },
+  { value: "kitchen-helper", label: "Kitchen Helper" },
   { value: "server/waiter", label: "Server/Waiter" },
   { value: "housekeeping", label: "House Keeping" },
+  { value: "cashier", label: "Cashier" },
+  { value: "barista", label: "Barista" },
+  { value: "gardener", label: "Gardener" },
+  { value: "receptionist", label: "Receptionist" },
 ]
 
 const DEFAULT_CRITERIA: Criterion[] = [
@@ -126,8 +130,6 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
         application_link_id: ranking?.application_link_id || generateLinkId(),
       }
 
-      console.log("Saving ranking data:", rankingData) // Added debug logging
-
       const url = ranking ? `/api/rankings/${ranking.id}` : "/api/rankings"
       const method = ranking ? "PUT" : "POST"
 
@@ -139,21 +141,22 @@ export default function RankingBuilder({ ranking, onBack, onComplete, onNotifica
         body: JSON.stringify(rankingData),
       })
 
-      console.log("Response status:", response.status) // Added debug logging
-
       if (response.ok) {
         const result = await response.json()
-        console.log("Success result:", result) // Added debug logging
         onNotification(ranking ? "Ranking updated successfully!" : "Ranking created successfully!", "success")
-        onComplete()
+        setTimeout(() => {
+          onComplete()
+        }, 1000)
       } else {
         const error = await response.json()
-        console.error("API Error:", error) // Added debug logging
         onNotification(error.error || `Failed to save ranking (${response.status})`, "error")
       }
     } catch (error) {
       console.error("Error saving ranking:", error)
-      onNotification(`An error occurred while saving: ${error.message}`, "error") // Show actual error message
+      onNotification(
+        `An error occurred while saving: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error",
+      )
     } finally {
       setSaving(false)
     }

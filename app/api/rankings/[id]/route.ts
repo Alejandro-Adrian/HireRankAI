@@ -24,7 +24,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Validate position
-    const validPositions = ["kitchen-helper", "server/waiter", "housekeeping"]
+    const validPositions = [
+      "kitchen-helper",
+      "server/waiter",
+      "housekeeping",
+      "cashier",
+      "barista",
+      "gardener",
+      "receptionist",
+    ]
     if (!validPositions.includes(position)) {
       return NextResponse.json({ error: "Invalid position" }, { status: 400 })
     }
@@ -75,13 +83,15 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const supabase = await createClient()
 
-    console.log("DELETE request for ranking ID:", params.id)
+    const { data: ranking, error: deleteError } = await supabase
+      .from("rankings")
+      .delete()
+      .eq("id", params.id)
+      .select()
+      .single()
 
-    // Delete the ranking (no auth required for public rankings)
-    const { data: ranking, error } = await supabase.from("rankings").delete().eq("id", params.id).select().single()
-
-    if (error) {
-      console.error("Error deleting ranking:", error)
+    if (deleteError) {
+      console.error("Error deleting ranking:", deleteError)
       return NextResponse.json({ error: "Failed to delete ranking" }, { status: 500 })
     }
 
@@ -89,10 +99,18 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Ranking not found" }, { status: 404 })
     }
 
-    console.log("Successfully deleted ranking:", ranking.id)
-    return NextResponse.json({ message: "Ranking deleted successfully", ranking })
+    return NextResponse.json({
+      message: "Ranking deleted successfully",
+      ranking,
+    })
   } catch (error) {
     console.error("Error in rankings DELETE API:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

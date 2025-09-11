@@ -1,37 +1,59 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getUserByEmail, storeVerificationCode } from "@/lib/storage"
-import { sendEmail, generateVerificationCode, createPasswordChangeEmailHTML } from "@/lib/email"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
+import { sendEmail, createPasswordChangeEmailHTML } from "@/lib/email"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, currentPassword, newPassword } = await request.json()
+    const { email, currentPassword } = await request.json()
 
-    if (!email || !currentPassword || !newPassword) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 })
+    if (!email || !currentPassword) {
+      return NextResponse.json({ error: "Email and current password are required" }, { status: 400 })
     }
 
-    // Check if user exists and verify current password
-    const user = await getUserByEmail(email)
-    if (!user) {
+    const cookieStore = cookies()
+    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    })
+
+    // Get user
+    const { data: user, error: userError } = await supabase.from("users").select("*").eq("email", email).single()
+
+    if (userError || !user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    if (!user.password_hash) {
-      return NextResponse.json({ error: "User password not found" }, { status: 400 })
-    }
-
+    // Verify current password
     const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash)
     if (!isValidPassword) {
       return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 })
     }
 
-    const code = generateVerificationCode()
-    await storeVerificationCode(email, code, "password_change")
+    // Generate verification code
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
 
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({
+        password_change_code: code,
+        password_change_expires_at: expiresAt.toISOString(),
+      })
+      .eq("email", email)
+
+    if (updateError) {
+      return NextResponse.json({ error: "Failed to store verification code" }, { status: 500 })
+    }
+
+    // Send email
     const emailResult = await sendEmail({
       to: email,
-      subject: "Password Change Verification",
+      subject: "Password Change Verification - HireRankerAI",
       html: createPasswordChangeEmailHTML(code),
     })
 

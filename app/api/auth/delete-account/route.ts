@@ -1,45 +1,55 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getUserByEmail, verifyCode, deleteUser } from "@/lib/storage"
-import bcrypt from "bcryptjs"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
-export async function POST(request: NextRequest) {
+export async function DELETE(request: NextRequest) {
   try {
-    const { email, password, verificationCode } = await request.json()
+    const { email, verificationCode } = await request.json()
 
-    if (!email || !password || !verificationCode) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 })
+    if (!email || !verificationCode) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Check if user exists
-    const user = await getUserByEmail(email)
-    if (!user) {
+    const cookieStore = cookies()
+    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    })
+
+    const { data: user, error: userError } = await supabase.from("users").select("*").eq("email", email).single()
+
+    if (userError || !user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    if (!user.password_hash) {
-      return NextResponse.json({ error: "User account has no password set" }, { status: 400 })
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash)
-    if (!isValidPassword) {
-      return NextResponse.json({ error: "Password is incorrect" }, { status: 400 })
-    }
-
-    const isValidCode = await verifyCode(email, verificationCode, "reset")
-    if (!isValidCode) {
+    // Verify the code
+    if (
+      !user.account_deletion_code ||
+      user.account_deletion_code !== verificationCode ||
+      !user.account_deletion_expires_at ||
+      new Date(user.account_deletion_expires_at) <= new Date()
+    ) {
       return NextResponse.json({ error: "Invalid or expired verification code" }, { status: 400 })
     }
 
-    // Delete the user account
-    const deletedUser = await deleteUser(email)
-    if (!deletedUser) {
+    // Delete user and all related data
+    const { error: deleteError } = await supabase.from("users").delete().eq("email", email)
+
+    if (deleteError) {
       return NextResponse.json({ error: "Failed to delete account" }, { status: 500 })
     }
 
     return NextResponse.json({ message: "Account deleted successfully" })
   } catch (error) {
-    console.error("Delete account error:", error)
+    console.error("Account deletion error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
+}
+
+// Keep POST method for backward compatibility
+export async function POST(request: NextRequest) {
+  return DELETE(request)
 }

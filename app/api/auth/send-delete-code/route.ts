@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getUserByEmail, storeVerificationCode } from "@/lib/storage"
-import { sendEmail, generateVerificationCode, createAccountDeletionEmailHTML } from "@/lib/email"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
+import { sendEmail, createAccountDeletionEmailHTML } from "@/lib/email"
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
@@ -11,27 +12,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Check if user exists and verify password
-    const user = await getUserByEmail(email)
-    if (!user) {
+    const cookieStore = cookies()
+    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    })
+
+    // Get user
+    const { data: user, error: userError } = await supabase.from("users").select("*").eq("email", email).single()
+
+    if (userError || !user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    if (!user.password_hash) {
-      return NextResponse.json({ error: "User account has no password set" }, { status: 400 })
-    }
-
+    // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password_hash)
     if (!isValidPassword) {
       return NextResponse.json({ error: "Password is incorrect" }, { status: 400 })
     }
 
-    const code = generateVerificationCode()
-    await storeVerificationCode(email, code, "account_deletion")
+    // Generate verification code
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
 
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({
+        account_deletion_code: code,
+        account_deletion_expires_at: expiresAt.toISOString(),
+      })
+      .eq("email", email)
+
+    if (updateError) {
+      return NextResponse.json({ error: "Failed to store verification code" }, { status: 500 })
+    }
+
+    // Send email
     const emailResult = await sendEmail({
       to: email,
-      subject: "Account Deletion Verification",
+      subject: "Account Deletion Verification - HireRankerAI",
       html: createAccountDeletionEmailHTML(code),
     })
 

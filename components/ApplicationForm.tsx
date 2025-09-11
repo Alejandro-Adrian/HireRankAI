@@ -91,7 +91,7 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
         submitData.append(`file_${index}_category`, fileUpload.category)
       })
 
-      console.log("[v0] Submitting application with", files.length, "files")
+      console.log("Submitting application with", files.length, "files")
 
       const response = await fetch("/api/applications", {
         method: "POST",
@@ -101,15 +101,15 @@ export default function ApplicationForm({ ranking }: ApplicationFormProps) {
       const responseData = await response.json()
 
       if (response.ok) {
-        console.log("[v0] Application submitted successfully:", responseData)
+        console.log("Application submitted successfully:", responseData)
         setExtractedInfo(responseData.extracted_info)
         setSubmitted(true)
       } else {
-        console.error("[v0] Application submission failed:", responseData)
+        console.error("Application submission failed:", responseData)
         setError(responseData.error || `Failed to submit application (${response.status})`)
       }
     } catch (error) {
-      console.error("[v0] Error submitting application:", error)
+      console.error("Error submitting application:", error)
       setError("An error occurred while submitting your application. Please try again.")
     } finally {
       setSubmitting(false)
