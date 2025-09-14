@@ -22,8 +22,8 @@ interface VideoSession {
 
 interface Application {
   id: string
-  candidate_name: string
-  candidate_email: string
+  applicant_name: string
+  applicant_email: string
   ranking_title: string
   ranking_id: string
 }
@@ -85,8 +85,8 @@ export default function VideoCallManager({ rankings, onBack, onNotification, use
         // Map the data to ensure we have the required fields
         const mappedApplications = applicationsData.map((app: any) => ({
           id: app.id,
-          candidate_name: app.candidate_name || app.name || "Unknown Candidate",
-          candidate_email: app.candidate_email || app.email || "No email",
+          candidate_name: app.applicant_name || app.candidate_name || app.name || "Unknown Candidate",
+          candidate_email: app.applicant_email || app.candidate_email || app.email || "No email",
           ranking_title: app.ranking_title || "Unknown Position",
           ranking_id: rankingId,
         }))

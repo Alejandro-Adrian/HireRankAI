@@ -1617,6 +1617,9 @@ export function createRejectionEmailHTML(
           padding: 40px 30px; 
           text-align: center;
           position: relative;
+          overflow: hidden; 40px 30px;
+          text-align: center;
+          position: relative;
           overflow: hidden;
         }
         
@@ -1752,8 +1755,6 @@ export function createRejectionEmailHTML(
           <div class="stats">
             <h3>📊 Your Application Results:</h3>
             <p>• <strong>Position:</strong> ${position}</p>
-            <p>• <strong>Your Ranking:</strong> #${ranking}</p>
-            <p>• <strong>Score:</strong> ${score}%</p>
             <p>• <strong>Status:</strong> Not Selected for Interview</p>
           </div>
 

@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient()
 
-    // Get session details
     const { data: session, error: sessionError } = await supabase
       .from("video_sessions")
       .select("*")
@@ -20,16 +19,14 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (sessionError || !session) {
+      console.error("Session fetch error:", sessionError)
       return NextResponse.json({ error: "Session not found" }, { status: 404 })
     }
 
-    // Get application details
     const { data: applications, error: appsError } = await supabase
       .from("applications")
       .select(`
         id,
-        candidate_name,
-        candidate_email,
         applicant_name,
         applicant_email,
         rankings (title, position)
@@ -37,46 +34,65 @@ export async function POST(request: NextRequest) {
       .in("id", application_ids)
 
     if (appsError || !applications) {
+      console.error("Applications fetch error:", appsError)
       return NextResponse.json({ error: "Applications not found" }, { status: 404 })
     }
 
-    const emailPromises = applications.map(async (application: any) => {
-      const candidateName = application.candidate_name || application.applicant_name || "Candidate"
-      const candidateEmail = application.candidate_email || application.applicant_email
-      const position = application.rankings?.title || application.rankings?.position || "Position"
-      const scheduledTime = session.scheduled_at ? new Date(session.scheduled_at).toLocaleString() : undefined
+    let successCount = 0
+    let failureCount = 0
 
-      const participantUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/video-call/${session.meeting_id}`
+    for (const application of applications) {
+      try {
+        const candidateName = application.applicant_name || "Candidate"
+        const candidateEmail = application.applicant_email
+        const position = application.rankings?.title || application.rankings?.position || "Position"
+        const scheduledTime = session.scheduled_at ? new Date(session.scheduled_at).toLocaleString() : undefined
 
-      const emailResult = await sendEmail({
-        to: candidateEmail,
-        subject: `📹 Video Interview Invitation - ${session.title}`,
-        html: createVideoCallInvitationEmailHTML(
-          candidateName,
-          position,
-          participantUrl,
-          scheduledTime,
-          session.meeting_id,
-        ),
-      })
+        if (!candidateEmail) {
+          console.error("No email found for application:", application.id)
+          failureCount++
+          continue
+        }
 
-      return emailResult
-    })
+        const participantUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/video-call/${session.meeting_id}`
 
-    const results = await Promise.all(emailPromises)
-    const successCount = results.filter((result) => result.success).length
-    const failureCount = results.length - successCount
+        const emailResult = await sendEmail({
+          to: candidateEmail,
+          subject: `📹 Video Interview Invitation - ${session.title}`,
+          html: createVideoCallInvitationEmailHTML(candidateName, position, participantUrl, scheduledTime),
+        })
 
-    // Update session participants count
-    await supabase.from("video_sessions").update({ participants_count: applications.length }).eq("id", session_id)
+        if (emailResult.success) {
+          successCount++
+        } else {
+          failureCount++
+          console.error("Email send failed for:", candidateEmail, emailResult.error)
+        }
+      } catch (emailError) {
+        console.error("Error sending email to application:", application.id, emailError)
+        failureCount++
+      }
+    }
+
+    if (successCount > 0) {
+      await supabase
+        .from("video_sessions")
+        .update({ participants_count: (session.participants_count || 0) + successCount })
+        .eq("id", session_id)
+    }
+
+    const message =
+      successCount > 0
+        ? `Successfully sent ${successCount} meeting invitations!${failureCount > 0 ? ` ${failureCount} failed.` : ""}`
+        : "Failed to send meeting invitations"
 
     return NextResponse.json({
-      message: `Successfully scheduled ${successCount} interviews! ${failureCount} failed.`,
+      message,
       sent_count: successCount,
       failed_count: failureCount,
     })
   } catch (error) {
-    console.error("Error sending invitations:", error)
-    return NextResponse.json({ error: "Failed to send invitations" }, { status: 500 })
+    console.error("Error in send-invitations route:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

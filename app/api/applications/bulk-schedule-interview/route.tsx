@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import nodemailer from "nodemailer"
 import { v4 as uuidv4 } from "uuid"
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         const meetingId = uuidv4()
         const hrAccessToken = uuidv4()
         const applicantAccessToken = uuidv4()
-        const meetingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/interview/${meetingId}`
+        const meetingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/video-call/${meetingId}` // Fixed meeting URL to match actual video call page route
 
         // Update application
         const { error: updateError } = await supabase
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
         const mailOptions = {
           from: process.env.EMAIL_USER,
-          to: application.email,
+          to: application.applicant_email,
           subject: `Interview Invitation - Congratulations!`,
           html: emailHtml,
           text: `Congratulations ${application.applicant_name}! You've been selected for an interview scheduled ${dateTimeText}. Join the video call at: ${meetingUrl}?token=${applicantAccessToken}`,
