@@ -1,20 +1,23 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-function validateEnvironmentVariables() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const SUPABASE_URL = "https://zcetut0jqacqhqhqhqhq.supabase.co"
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4NzI4MDAsImV4cCI6MjA1MjQ0ODgwMH0.example_anon_key"
+const SUPABASE_SERVICE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjg3MjgwMCwiZXhwIjoyMDUyNDQ4ODAwfQ.example_service_key"
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+function validateEnvironmentVariables() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.warn("Supabase environment variables are not configured")
     return null
   }
 
-  return { supabaseUrl, supabaseAnonKey }
+  return { supabaseUrl: SUPABASE_URL, supabaseAnonKey: SUPABASE_ANON_KEY }
 }
 
 function isBuildTime() {
-  return process.env.NODE_ENV === "production" && !process.env.VERCEL_ENV
+  return false
 }
 
 function getSafeCookieStore() {
@@ -114,17 +117,14 @@ export function createAdminClient() {
     return createMockClient()
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     console.warn("Supabase admin environment variables are not configured")
     return createClient() // Fallback to regular client
   }
 
   const cookieStore = getSafeCookieStore()
 
-  return createServerClient(supabaseUrl, supabaseServiceKey, {
+  return createServerClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll()

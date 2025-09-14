@@ -2,7 +2,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendEmail, createCongratulationsEmailHTML } from "@/lib/email"
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const SUPABASE_URL = "https://zcetut0jqacqhqhqhqhq.supabase.co"
+const SUPABASE_SERVICE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjg3MjgwMCwiZXhwIjoyMDUyNDQ4ODAwfQ.example_service_key"
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {

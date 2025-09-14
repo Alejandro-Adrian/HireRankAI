@@ -3,14 +3,17 @@ import { config } from "dotenv"
 
 config() // Load environment variables from .env file
 
+const EMAIL_USER = process.env.EMAIL_USER || "adrianalejandro052004@gmail.com"
+const EMAIL_PASS = process.env.EMAIL_PASS || "lftzdsvacnbeuxwi"
+
 // Email configuration using the provided credentials
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false, // true for 465, false for other ports
   auth: {
-    user: process.env.EMAIL_USER || "adrianalejandro052004@gmail.com",
-    pass: process.env.EMAIL_PASS || "lftzdsvacnbeuxwi",
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
   },
 })
 
@@ -27,7 +30,7 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
     console.log("[v0] 📧 Using SMTP config:", {
       host: "smtp.gmail.com",
       port: 587,
-      user: process.env.EMAIL_USER || "adrianalejandro052004@gmail.com",
+      user: EMAIL_USER,
     })
 
     const info = await transporter.sendMail({

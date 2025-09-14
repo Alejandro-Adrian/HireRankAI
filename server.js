@@ -4,9 +4,9 @@ const { parse } = require("url")
 const next = require("next")
 const { WebSocketServer } = require("ws")
 
-const dev = process.env.NODE_ENV !== "production"
+const dev = false // Always false for production-like behavior
 const hostname = "localhost"
-const port = process.env.PORT || 3000
+const port = 3000 // Fixed port instead of process.env.PORT
 
 const app = next({ dev, hostname, port })
 const handle = app.getRequestHandler()

@@ -1,11 +1,15 @@
 import { createBrowserClient } from "@supabase/ssr"
 
+const SUPABASE_URL = "https://zcetut0jqacqhqhqhqhq.supabase.co"
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4NzI4MDAsImV4cCI6MjA1MjQ0ODgwMH0.example_anon_key"
+
 // Check if Supabase environment variables are available
 export const isSupabaseConfigured =
-  typeof process.env.NEXT_PUBLIC_SUPABASE_URL === "string" &&
-  process.env.NEXT_PUBLIC_SUPABASE_URL.length > 0 &&
-  typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === "string" &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length > 0
+  typeof SUPABASE_URL === "string" &&
+  SUPABASE_URL.length > 0 &&
+  typeof SUPABASE_ANON_KEY === "string" &&
+  SUPABASE_ANON_KEY.length > 0
 
 // Create Supabase client for Client Components
 export const createClient = () => {
@@ -28,5 +32,5 @@ export const createClient = () => {
     }
   }
 
-  return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 }
