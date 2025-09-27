@@ -1,57 +1,103 @@
+import { Resend } from "resend"
 import nodemailer from "nodemailer"
 import { config } from "dotenv"
 
-config() // Load environment variables from .env file
+if (typeof window === "undefined") {
+  // Load .env file in all environments (development and production)
+  config()
+}
 
-const EMAIL_USER = process.env.EMAIL_USER || "adrianalejandro052004@gmail.com"
-const EMAIL_PASS = process.env.EMAIL_PASS || "lftzdsvacnbeuxwi"
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Email configuration using the provided credentials
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-})
+let transporter: nodemailer.Transporter | null = null
 
-export interface EmailOptions {
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: "smtp.resend.com",
+      port: 587,
+      secure: false, // Use STARTTLS
+      auth: {
+        user: "resend",
+        pass: process.env.RESEND_API_KEY, // Resend API key
+      },
+      // Railway-optimized settings
+      connectionTimeout: 30000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
+      pool: false,
+      debug: process.env.NODE_ENV === "development",
+      logger: process.env.NODE_ENV === "development",
+    })
+  }
+  return transporter
+}
+
+interface EmailOptions {
   to: string
   subject: string
   html: string
 }
 
-export async function sendEmail({ to, subject, html }: EmailOptions) {
+export async function sendEmail(options: EmailOptions) {
+  const { to, subject, html } = options
+
   try {
-    console.log("[v0] 📧 Attempting to send email to:", to)
-    console.log("[v0] 📧 Email subject:", subject)
-    console.log("[v0] 📧 Using SMTP config:", {
-      host: "smtp.gmail.com",
-      port: 587,
-      user: EMAIL_USER,
+    console.log("[v0] 🚀 Starting email send via Resend API...")
+    console.log("[v0] 📧 To:", to)
+    console.log("[v0] 📝 Subject:", subject)
+
+    const { data, error } = await resend.emails.send({
+      from: "HireRankerAI <noreply@resend.dev>",
+      to: [to],
+      subject: subject,
+      html: html,
     })
 
-    const info = await transporter.sendMail({
-      from: '"HireRankerAI" <adrianalejandro052004@gmail.com>',
-      to,
-      subject,
-      html,
-    })
-
-    console.log("[v0] ✅ Email sent successfully:", info.messageId)
-    console.log("[v0] 📧 Email response:", info.response)
-    return { success: true, messageId: info.messageId }
-  } catch (error) {
-    console.error("[v0] ❌ Email sending failed:", error)
-    if (error instanceof Error) {
-      console.error("[v0] ❌ Error details:", {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-      })
+    if (error) {
+      console.error("[v0] ❌ Resend API error:", error)
+      if (error.message?.includes("403") || error.message?.includes("testing")) {
+        return {
+          success: false,
+          error:
+            "Email service is in testing mode. Please verify your email domain in Resend dashboard or contact support.",
+        }
+      }
+      return { success: false, error: error.message }
     }
+
+    console.log("[v0] ✅ Email sent successfully via Resend API:", data?.id)
+    return { success: true, messageId: data?.id }
+  } catch (error) {
+    console.error("[v0] ❌ Resend email sending failed:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+export async function sendEmailLegacy(to: string, subject: string, html: string) {
+  return sendEmail({ to, subject, html })
+}
+
+export async function testEmailConnection() {
+  try {
+    console.log("[v0] 🔍 Testing Resend API connection...")
+
+    const { data, error } = await resend.emails.send({
+      from: "HireRankerAI <noreply@resend.dev>",
+      to: ["delivered@resend.dev"], // Use Resend's test email for connection testing
+      subject: "Connection Test",
+      html: "<p>Testing Resend API connection</p>",
+    })
+
+    if (error) {
+      console.error("[v0] ❌ Resend API connection test failed:", error)
+      return { success: false, error: error.message }
+    }
+
+    console.log("[v0] ✅ Resend API connection test successful")
+    return { success: true }
+  } catch (error) {
+    console.error("[v0] ❌ Resend API connection test failed:", error)
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
@@ -94,207 +140,67 @@ export function createVerificationEmailHTML(code: string): string {
           backdrop-filter: blur(20px);
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 25px 50px rgba(5, 150, 105, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(5, 150, 105, 0.1);
+          box-shadow: 0 25px 50px rgba(5, 150, 105, 0.1);
+          padding: 40px;
         }
         
-        .header { 
-          background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
-          color: white; 
-          padding: 40px 30px; 
-          text-align: center; 
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 700;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .header p {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-          font-weight: 400;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .content { 
-          background: white;
-          padding: 40px 30px; 
-          position: relative;
-        }
-        
-        .welcome-text {
-          font-size: 18px;
-          color: #059669;
-          font-weight: 600;
-          margin-bottom: 20px;
-        }
-        
-        .main-text {
-          font-size: 16px;
-          color: #374151;
-          margin-bottom: 30px;
-          line-height: 1.7;
-        }
-        
-        .code-container {
-          background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-          border-radius: 16px;
-          padding: 30px;
+        .header {
           text-align: center;
-          margin: 30px 0;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 10px 25px rgba(5, 150, 105, 0.3);
+          margin-bottom: 30px;
         }
         
-        .code-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          animation: slideShine 2s infinite;
-        }
-        
-        .code-label {
-          color: rgba(255,255,255,0.8);
-          font-size: 14px;
-          font-weight: 500;
+        .logo {
+          font-size: 24px;
+          font-weight: 700;
+          color: #059669;
           margin-bottom: 10px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
         }
         
-        .code { 
-          color: white; 
-          font-size: 32px; 
-          font-weight: 700; 
-          letter-spacing: 8px;
-          font-family: 'Monaco', 'Menlo', monospace;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .security-info {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          border: 1px solid #f59e0b;
+        .verification-code {
+          background: #f0fdf4;
+          border: 2px solid #059669;
           border-radius: 12px;
           padding: 20px;
-          margin: 25px 0;
-          display: flex;
-          align-items: center;
-          gap: 12px;
+          text-align: center;
+          margin: 30px 0;
         }
         
-        .security-icon {
-          font-size: 20px;
-          color: #d97706;
-        }
-        
-        .security-text {
-          color: #92400e;
-          font-size: 14px;
-          font-weight: 500;
-          margin: 0;
-        }
-        
-        .footer { 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          text-align: center; 
-          padding: 30px;
-          color: #6b7280; 
-          font-size: 14px;
-          border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer-brand {
-          font-weight: 600;
+        .code {
+          font-size: 32px;
+          font-weight: 700;
           color: #059669;
-          margin-bottom: 8px;
+          letter-spacing: 4px;
+          font-family: 'Courier New', monospace;
         }
         
-        .footer-text {
-          margin: 0;
-          line-height: 1.5;
-        }
-        
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
-          margin: 25px 0;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes slideShine {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        
-        @media (max-width: 600px) {
-          body { padding: 10px; }
-          .email-container { border-radius: 16px; }
-          .header { padding: 30px 20px; }
-          .header h1 { font-size: 24px; }
-          .content { padding: 30px 20px; }
-          .code { font-size: 28px; letter-spacing: 6px; }
-          .code-container { padding: 25px 15px; }
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 14px;
+          color: #6b7280;
         }
       </style>
     </head>
     <body>
       <div class="email-container">
         <div class="header">
-          <h1>✨ Email Verification</h1>
-          <p>Secure your HireRankerAI account</p>
+          <div class="logo">🚀 HireRankerAI</div>
+          <h1>Verify Your Email Address</h1>
         </div>
-        <div class="content">
-          <p class="welcome-text">Hello there! 👋</p>
-          <p class="main-text">Thank you for joining HireRankerAI! We're excited to have you on board. Please use the verification code below to complete your registration and unlock all the amazing features waiting for you.</p>
-          
-          <div class="code-container">
-            <div class="code-label">Your Verification Code</div>
-            <div class="code">${code}</div>
-          </div>
-          
-          <div class="security-info">
-            <span class="security-icon">🔒</span>
-            <p class="security-text">This code will expire in 10 minutes for your security. Keep it confidential!</p>
-          </div>
-          
-          <div class="divider"></div>
-          
-          <p class="main-text">If you didn't create an account with HireRankerAI, you can safely ignore this email. No further action is required.</p>
+        
+        <p>Welcome to HireRankerAI! Please verify your email address by entering the code below:</p>
+        
+        <div class="verification-code">
+          <div class="code">${code}</div>
+          <p style="margin-top: 10px; color: #059669; font-weight: 500;">Enter this code to complete your registration</p>
         </div>
+        
+        <p>This code will expire in 10 minutes for security reasons.</p>
+        <p>If you didn't create an account with HireRankerAI, please ignore this email.</p>
+        
         <div class="footer">
-          <div class="footer-brand">HireRankerAI</div>
-          <p class="footer-text">This is an automated message. Please do not reply to this email.<br>© 2024 HireRankerAI. All rights reserved.</p>
+          <p>Best regards,<br>The HireRankerAI Team</p>
         </div>
       </div>
     </body>
@@ -302,7 +208,7 @@ export function createVerificationEmailHTML(code: string): string {
   `
 }
 
-export function createPasswordResetEmailHTML(code: string): string {
+export function createPasswordResetEmailHTML(resetCode: string): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -310,1031 +216,6 @@ export function createPasswordResetEmailHTML(code: string): string {
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Password Reset - HireRankerAI</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body { 
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-          line-height: 1.6; 
-          color: #374151; 
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 50%, #fecaca 100%);
-          margin: 0;
-          padding: 20px;
-          min-height: 100vh;
-        }
-        
-        .email-container { 
-          max-width: 600px; 
-          margin: 0 auto; 
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 25px 50px rgba(220, 38, 38, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(220, 38, 38, 0.1);
-        }
-        
-        .header { 
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
-          color: white; 
-          padding: 40px 30px; 
-          text-align: center; 
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 700;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .header p {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-          font-weight: 400;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .content { 
-          background: white;
-          padding: 40px 30px; 
-          position: relative;
-        }
-        
-        .welcome-text {
-          font-size: 18px;
-          color: #dc2626;
-          font-weight: 600;
-          margin-bottom: 20px;
-        }
-        
-        .main-text {
-          font-size: 16px;
-          color: #374151;
-          margin-bottom: 30px;
-          line-height: 1.7;
-        }
-        
-        .code-container {
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-          border-radius: 16px;
-          padding: 30px;
-          text-align: center;
-          margin: 30px 0;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
-        }
-        
-        .code-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          animation: slideShine 2s infinite;
-        }
-        
-        .code-label {
-          color: rgba(255,255,255,0.8);
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 10px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-        
-        .code { 
-          color: white; 
-          font-size: 32px; 
-          font-weight: 700; 
-          letter-spacing: 8px;
-          font-family: 'Monaco', 'Menlo', monospace;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .security-info {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          border: 1px solid #f59e0b;
-          border-radius: 12px;
-          padding: 20px;
-          margin: 25px 0;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        
-        .security-icon {
-          font-size: 20px;
-          color: #d97706;
-        }
-        
-        .security-text {
-          color: #92400e;
-          font-size: 14px;
-          font-weight: 500;
-          margin: 0;
-        }
-        
-        .footer { 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          text-align: center; 
-          padding: 30px;
-          color: #6b7280; 
-          font-size: 14px;
-          border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer-brand {
-          font-weight: 600;
-          color: #dc2626;
-          margin-bottom: 8px;
-        }
-        
-        .footer-text {
-          margin: 0;
-          line-height: 1.5;
-        }
-        
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
-          margin: 25px 0;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes slideShine {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        
-        @media (max-width: 600px) {
-          body { padding: 10px; }
-          .email-container { border-radius: 16px; }
-          .header { padding: 30px 20px; }
-          .header h1 { font-size: 24px; }
-          .content { padding: 30px 20px; }
-          .code { font-size: 28px; letter-spacing: 6px; }
-          .code-container { padding: 25px 15px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="header">
-          <h1>🔐 Password Reset</h1>
-          <p>Secure your account access</p>
-        </div>
-        <div class="content">
-          <p class="welcome-text">Security Alert! 🛡️</p>
-          <p class="main-text">We received a request to reset your HireRankerAI account password. If this was you, please use the verification code below to proceed with resetting your password.</p>
-          
-          <div class="code-container">
-            <div class="code-label">Your Reset Code</div>
-            <div class="code">${code}</div>
-          </div>
-          
-          <div class="security-info">
-            <span class="security-icon">⏰</span>
-            <p class="security-text">This code will expire in 10 minutes for your security. Use it promptly!</p>
-          </div>
-          
-          <div class="divider"></div>
-          
-          <p class="main-text">If you didn't request this password reset, please ignore this email and your password will remain unchanged. Consider updating your account security if you're concerned.</p>
-        </div>
-        <div class="footer">
-          <div class="footer-brand">HireRankerAI</div>
-          <p class="footer-text">This is an automated security message. Please do not reply to this email.<br>© 2024 HireRankerAI. All rights reserved.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
-}
-
-export function createPasswordChangeEmailHTML(code: string): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Password Change Verification - HireRankerAI</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body { 
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-          line-height: 1.6; 
-          color: #374151; 
-          background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%);
-          margin: 0;
-          padding: 20px;
-          min-height: 100vh;
-        }
-        
-        .email-container { 
-          max-width: 600px; 
-          margin: 0 auto; 
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 25px 50px rgba(245, 158, 11, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(245, 158, 11, 0.1);
-        }
-        
-        .header { 
-          background: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #fb923c 100%);
-          color: white; 
-          padding: 40px 30px; 
-          text-align: center; 
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 700;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .header p {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-          font-weight: 400;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .content { 
-          background: white;
-          padding: 40px 30px; 
-          position: relative;
-        }
-        
-        .welcome-text {
-          font-size: 18px;
-          color: #f59e0b;
-          font-weight: 600;
-          margin-bottom: 20px;
-        }
-        
-        .main-text {
-          font-size: 16px;
-          color: #374151;
-          margin-bottom: 30px;
-          line-height: 1.7;
-        }
-        
-        .code-container {
-          background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-          border-radius: 16px;
-          padding: 30px;
-          text-align: center;
-          margin: 30px 0;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
-        }
-        
-        .code-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          animation: slideShine 2s infinite;
-        }
-        
-        .code-label {
-          color: rgba(255,255,255,0.8);
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 10px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-        
-        .code { 
-          color: white; 
-          font-size: 32px; 
-          font-weight: 700; 
-          letter-spacing: 8px;
-          font-family: 'Monaco', 'Menlo', monospace;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .security-info {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          border: 1px solid #f59e0b;
-          border-radius: 12px;
-          padding: 20px;
-          margin: 25px 0;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        
-        .security-icon {
-          font-size: 20px;
-          color: #d97706;
-        }
-        
-        .security-text {
-          color: #92400e;
-          font-size: 14px;
-          font-weight: 500;
-          margin: 0;
-        }
-        
-        .footer { 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          text-align: center; 
-          padding: 30px;
-          color: #6b7280; 
-          font-size: 14px;
-          border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer-brand {
-          font-weight: 600;
-          color: #f59e0b;
-          margin-bottom: 8px;
-        }
-        
-        .footer-text {
-          margin: 0;
-          line-height: 1.5;
-        }
-        
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
-          margin: 25px 0;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes slideShine {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        
-        @media (max-width: 600px) {
-          body { padding: 10px; }
-          .email-container { border-radius: 16px; }
-          .header { padding: 30px 20px; }
-          .header h1 { font-size: 24px; }
-          .content { padding: 30px 20px; }
-          .code { font-size: 28px; letter-spacing: 6px; }
-          .code-container { padding: 25px 15px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="header">
-          <h1>🔄 Password Change</h1>
-          <p>Confirm your security update</p>
-        </div>
-        <div class="content">
-          <p class="welcome-text">Account Update! 🔐</p>
-          <p class="main-text">You requested to change your HireRankerAI account password. To ensure this change is authorized by you, please use the verification code below to confirm this security update.</p>
-          
-          <div class="code-container">
-            <div class="code-label">Your Confirmation Code</div>
-            <div class="code">${code}</div>
-          </div>
-          
-          <div class="security-info">
-            <span class="security-icon">🔒</span>
-            <p class="security-text">This code will expire in 10 minutes. Complete the process promptly for security.</p>
-          </div>
-          
-          <div class="divider"></div>
-          
-          <p class="main-text">If you didn't request this password change, please contact our support team immediately. Your account security is our top priority.</p>
-        </div>
-        <div class="footer">
-          <div class="footer-brand">HireRankerAI</div>
-          <p class="footer-text">This is an automated security message. Please do not reply to this email.<br>© 2024 HireRankerAI. All rights reserved.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
-}
-
-export function createAccountDeletionEmailHTML(code: string): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Account Deletion Verification - HireRankerAI</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body { 
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-          line-height: 1.6; 
-          color: #374151; 
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 50%, #fecaca 100%);
-          margin: 0;
-          padding: 20px;
-          min-height: 100vh;
-        }
-        
-        .email-container { 
-          max-width: 600px; 
-          margin: 0 auto; 
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 25px 50px rgba(220, 38, 38, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(220, 38, 38, 0.1);
-        }
-        
-        .header { 
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
-          color: white; 
-          padding: 40px 30px; 
-          text-align: center; 
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 700;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .header p {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-          font-weight: 400;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .content { 
-          background: white;
-          padding: 40px 30px; 
-          position: relative;
-        }
-        
-        .welcome-text {
-          font-size: 18px;
-          color: #dc2626;
-          font-weight: 600;
-          margin-bottom: 20px;
-        }
-        
-        .main-text {
-          font-size: 16px;
-          color: #374151;
-          margin-bottom: 30px;
-          line-height: 1.7;
-        }
-        
-        .warning { 
-          background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
-          border: 2px solid #fca5a5; 
-          padding: 25px; 
-          border-radius: 16px; 
-          margin: 25px 0;
-          position: relative;
-        }
-        
-        .warning-title {
-          color: #dc2626;
-          font-weight: 700;
-          font-size: 16px;
-          margin-bottom: 10px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .warning-text {
-          color: #7f1d1d;
-          font-size: 14px;
-          margin: 0;
-        }
-        
-        .code-container {
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-          border-radius: 16px;
-          padding: 30px;
-          text-align: center;
-          margin: 30px 0;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
-        }
-        
-        .code-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          animation: slideShine 2s infinite;
-        }
-        
-        .code-label {
-          color: rgba(255,255,255,0.8);
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 10px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-        
-        .code { 
-          color: white; 
-          font-size: 32px; 
-          font-weight: 700; 
-          letter-spacing: 8px;
-          font-family: 'Monaco', 'Menlo', monospace;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .deletion-list {
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          border: 1px solid #d1d5db;
-          border-radius: 12px;
-          padding: 20px;
-          margin: 25px 0;
-        }
-        
-        .deletion-list h4 {
-          color: #374151;
-          font-weight: 600;
-          margin-bottom: 15px;
-          font-size: 16px;
-        }
-        
-        .deletion-list ul {
-          margin: 0;
-          padding-left: 20px;
-          color: #6b7280;
-        }
-        
-        .deletion-list li {
-          margin: 8px 0;
-          font-size: 14px;
-        }
-        
-        .security-info {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          border: 1px solid #f59e0b;
-          border-radius: 12px;
-          padding: 20px;
-          margin: 25px 0;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        
-        .security-icon {
-          font-size: 20px;
-          color: #d97706;
-        }
-        
-        .security-text {
-          color: #92400e;
-          font-size: 14px;
-          font-weight: 500;
-          margin: 0;
-        }
-        
-        .footer { 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          text-align: center; 
-          padding: 30px;
-          color: #6b7280; 
-          font-size: 14px;
-          border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer-brand {
-          font-weight: 600;
-          color: #dc2626;
-          margin-bottom: 8px;
-        }
-        
-        .footer-text {
-          margin: 0;
-          line-height: 1.5;
-        }
-        
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
-          margin: 25px 0;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes slideShine {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        
-        @media (max-width: 600px) {
-          body { padding: 10px; }
-          .email-container { border-radius: 16px; }
-          .header { padding: 30px 20px; }
-          .header h1 { font-size: 24px; }
-          .content { padding: 30px 20px; }
-          .code { font-size: 28px; letter-spacing: 6px; }
-          .code-container { padding: 25px 15px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="header">
-          <h1>⚠️ Account Deletion</h1>
-          <p>Final confirmation required</p>
-        </div>
-        <div class="content">
-          <p class="welcome-text">Critical Action Required! 🚨</p>
-          
-          <div class="warning">
-            <div class="warning-title">
-              <span>⚠️</span>
-              <span>PERMANENT DELETION WARNING</span>
-            </div>
-            <p class="warning-text">You requested to permanently delete your HireRankerAI account. This action cannot be undone and will result in complete data loss.</p>
-          </div>
-          
-          <p class="main-text">If you're certain about this decision, please use the verification code below to confirm the permanent deletion of your account.</p>
-          
-          <div class="code-container">
-            <div class="code-label">Your Deletion Code</div>
-            <div class="code">${code}</div>
-          </div>
-          
-          <div class="security-info">
-            <span class="security-icon">⏰</span>
-            <p class="security-text">This code will expire in 10 minutes. This is your final opportunity to reconsider.</p>
-          </div>
-          
-          <div class="deletion-list">
-            <h4>🗑️ This will permanently delete:</h4>
-            <ul>
-              <li>All your rankings and job postings</li>
-              <li>Candidate applications and data</li>
-              <li>Interview records and notes</li>
-              <li>Account settings and preferences</li>
-              <li>All associated files and documents</li>
-            </ul>
-          </div>
-          
-          <div class="divider"></div>
-          
-          <p class="main-text">If you didn't request this account deletion, please contact our support team immediately. Your account security is our top priority.</p>
-        </div>
-        <div class="footer">
-          <div class="footer-brand">HireRankerAI</div>
-          <p class="footer-text">This is an automated security message. Please do not reply to this email.<br>© 2024 HireRankerAI. All rights reserved.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
-}
-
-export function createCongratulationsEmailHTML(
-  candidateName: string,
-  position: string,
-  ranking: number,
-  score: number,
-): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>🎉 Congratulations - You've Been Selected!</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        
-        body { 
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-          line-height: 1.6; 
-          color: #1F2937; 
-          background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
-          margin: 0;
-          padding: 20px;
-          min-height: 100vh;
-        }
-        
-        .email-container { 
-          max-width: 600px; 
-          margin: 0 auto; 
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 25px 50px rgba(16, 185, 129, 0.2), 0 10px 25px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.1);
-        }
-        
-        .header { 
-          background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
-          color: white; 
-          padding: 40px 30px; 
-          text-align: center; 
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 700;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .header p {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .content { 
-          background: white; 
-          padding: 40px 30px; 
-        }
-        
-        .celebration {
-          font-size: 48px;
-          text-align: center;
-          margin: 20px 0;
-          animation: bounce 2s infinite;
-        }
-        
-        .highlight { 
-          background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
-          color: white; 
-          padding: 20px; 
-          text-align: center; 
-          font-size: 18px; 
-          font-weight: 600; 
-          border-radius: 12px; 
-          margin: 25px 0; 
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-        
-        .next-steps { 
-          background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); 
-          border: 2px solid #BFDBFE; 
-          padding: 25px; 
-          border-radius: 12px; 
-          margin: 25px 0; 
-        }
-        
-        .next-steps h3 {
-          color: #1D4ED8;
-          margin-top: 0;
-          font-size: 18px;
-          font-weight: 600;
-        }
-        
-        .next-steps ul {
-          margin: 15px 0;
-          padding-left: 20px;
-        }
-        
-        .next-steps li {
-          margin: 8px 0;
-          font-weight: 500;
-        }
-        
-        .footer { 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          text-align: center; 
-          padding: 30px;
-          color: #6B7280; 
-          font-size: 14px; 
-          border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer-brand {
-          font-weight: 600;
-          color: #059669;
-          margin-bottom: 8px;
-        }
-        
-        @keyframes bounce {
-          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-10px); }
-          60% { transform: translateY(-5px); }
-        }
-        
-        @keyframes shimmer {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 600px) {
-          body { padding: 10px; }
-          .email-container { border-radius: 16px; }
-          .header { padding: 30px 20px; }
-          .header h1 { font-size: 24px; }
-          .content { padding: 30px 20px; }
-          .celebration { font-size: 36px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="header">
-          <div class="celebration">🎉</div>
-          <h1>Congratulations!</h1>
-          <p>You have successfully passed our selection process</p>
-        </div>
-        <div class="content">
-          <p>Dear <strong>${candidateName}</strong>,</p>
-          
-          <p>We are absolutely <strong>delighted</strong> to inform you that you have successfully passed our rigorous applicant selection process for the <strong>${position}</strong> position at HireRankerAI!</p>
-          
-          <div class="highlight">
-            ✅ You have been <strong>APPROVED</strong> for the interview process!
-          </div>
-
-          <div class="next-steps">
-            <h3>📅 What Happens Next?</h3>
-            <p><strong>🔔 Please keep an eye on your inbox!</strong> Our HR team will send you another email within the next <strong>2-3 business days</strong> with your interview details.</p>
-            
-            <p><strong>Your upcoming interview package will include:</strong></p>
-            <ul>
-              <li>📅 <strong>Specific interview date and time</strong></li>
-              <li>💻 <strong>Interview format</strong> (video call, phone, or in-person)</li>
-              <li>📋 <strong>Interview preparation guidelines</strong></li>
-              <li>👥 <strong>Information about your interviewers</strong></li>
-              <li>📞 <strong>Direct contact information</strong> for any questions</li>
-              <li>🎯 <strong>What to expect during the interview</strong></li>
-            </ul>
-            
-            <p style="background: #FEF3C7; padding: 15px; border-radius: 8px; border-left: 4px solid #F59E0B; margin: 15px 0;">
-              <strong>💡 Pro Tip:</strong> Start preparing now! Review the job description, research our company, and prepare examples of your relevant experience.
-            </p>
-          </div>
-
-          <p>This is a significant achievement, and you should be proud of making it through our competitive selection process. We were impressed by your qualifications and look forward to learning more about you during the interview.</p>
-          
-          <p style="font-size: 18px; color: #059669; font-weight: 600; text-align: center; margin: 30px 0;">
-            🌟 Welcome to the next step of your journey with HireRankerAI! 🌟
-          </p>
-          
-          <p>Warm regards,<br>
-          <strong>The HireRankerAI Talent Acquisition Team</strong><br>
-          <em>Building the future, one great hire at a time</em></p>
-        </div>
-        <div class="footer">
-          <div class="footer-brand">HireRankerAI</div>
-          <p>📧 This is an automated message from our AI-powered hiring system.</p>
-          <p>🔒 Your information is secure and confidential.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `
-}
-
-export function createVideoCallInvitationEmailHTML(
-  candidateName: string,
-  position: string,
-  meetingUrl: string,
-  scheduledTime?: string,
-): string {
-  const timeInfo = scheduledTime ? `scheduled for ${scheduledTime}` : "available immediately (ASAP)"
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Video Interview Invitation - HireRankerAI</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -1361,209 +242,76 @@ export function createVideoCallInvitationEmailHTML(
           backdrop-filter: blur(20px);
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 25px 50px rgba(59, 130, 246, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.1);
+          box-shadow: 0 25px 50px rgba(59, 130, 246, 0.1);
+          padding: 40px;
         }
         
-        .header { 
-          background: linear-gradient(135deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%);
-          color: white; 
-          padding: 40px 30px; 
-          text-align: center; 
-          position: relative;
-          overflow: hidden;
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
         }
         
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
+        .logo {
+          font-size: 24px;
           font-weight: 700;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 1;
+          color: #3b82f6;
+          margin-bottom: 10px;
         }
         
-        .header p {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .content { 
-          background: white;
-          padding: 40px 30px; 
-        }
-        
-        .meeting-link { 
-          background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); 
-          color: white; 
-          padding: 20px; 
-          text-align: center; 
-          border-radius: 16px; 
-          margin: 30px 0;
-          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .meeting-link::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          animation: slideShine 2s infinite;
-        }
-        
-        .meeting-link a { 
-          color: white; 
-          text-decoration: none; 
-          font-weight: 600; 
-          font-size: 18px;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .info-box { 
-          background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); 
-          border: 2px solid #BFDBFE; 
-          padding: 25px; 
-          border-radius: 16px; 
-          margin: 25px 0; 
-        }
-        
-        .info-box h4 {
-          color: #1D4ED8;
-          font-weight: 600;
-          margin-bottom: 15px;
-          font-size: 16px;
-        }
-        
-        .info-box p {
-          margin: 8px 0;
-          color: #374151;
-        }
-        
-        .tips-section {
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          border: 1px solid #d1d5db;
+        .reset-code {
+          background: #eff6ff;
+          border: 2px solid #3b82f6;
           border-radius: 12px;
           padding: 20px;
-          margin: 25px 0;
+          text-align: center;
+          margin: 30px 0;
         }
         
-        .tips-section h4 {
-          color: #374151;
-          font-weight: 600;
-          margin-bottom: 15px;
+        .code {
+          font-size: 32px;
+          font-weight: 700;
+          color: #3b82f6;
+          letter-spacing: 4px;
+          font-family: 'Courier New', monospace;
         }
         
-        .tips-section ul {
-          margin: 0;
-          padding-left: 20px;
-          color: #6b7280;
+        .security-notice {
+          background: #fef3c7;
+          border-left: 4px solid #f59e0b;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 20px 0;
         }
         
-        .tips-section li {
-          margin: 8px 0;
-          font-size: 14px;
-        }
-        
-        .footer { 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          text-align: center; 
-          padding: 30px;
-          color: #6b7280; 
-          font-size: 14px;
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
           border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer-brand {
-          font-weight: 600;
-          color: #3B82F6;
-          margin-bottom: 8px;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes slideShine {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        
-        @media (max-width: 600px) {
-          body { padding: 10px; }
-          .email-container { border-radius: 16px; }
-          .header { padding: 30px 20px; }
-          .header h1 { font-size: 24px; }
-          .content { padding: 30px 20px; }
+          font-size: 14px;
+          color: #6b7280;
         }
       </style>
     </head>
     <body>
       <div class="email-container">
         <div class="header">
-          <h1>📹 Video Interview Invitation</h1>
-          <p>Your next step with HireRankerAI</p>
+          <div class="logo">🔐 HireRankerAI</div>
+          <h1>Password Reset Request</h1>
         </div>
-        <div class="content">
-          <p>Dear <strong>${candidateName}</strong>,</p>
-          <p>You are invited to a video interview for the <strong>${position}</strong> position! We're excited to meet you and learn more about your qualifications.</p>
-          
-          <div class="info-box">
-            <h4>📋 Interview Details:</h4>
-            <p>• <strong>Position:</strong> ${position}</p>
-            <p>• <strong>Interview Time:</strong> ${timeInfo}</p>
-            <p>• <strong>Format:</strong> Video Call</p>
-            <p>• <strong>Duration:</strong> Approximately 45-60 minutes</p>
-          </div>
-          
-          <p>Please use the following link to join the video interview:</p>
-          
-          <div class="meeting-link">
-            <a href="${meetingUrl}" target="_blank">🎥 Join Video Interview</a>
-          </div>
-          
-          <div class="tips-section">
-            <h4>💡 Important Preparation Tips:</h4>
-            <ul>
-              <li>Test your camera and microphone 15 minutes before the interview</li>
-              <li>Ensure you have a stable internet connection</li>
-              <li>Join from a quiet, well-lit location with minimal distractions</li>
-              <li>Have a copy of your resume and any relevant documents ready</li>
-              <li>Prepare questions about the role and company</li>
-              <li>You can only join at the designated time</li>
-              <li>Our HR team can join at any time during the session</li>
-            </ul>
-          </div>
-          
-          <p>If you experience any technical issues or need to reschedule, please contact our HR team immediately. We want to ensure you have the best possible interview experience.</p>
-          
-          <p>We look forward to speaking with you and learning more about how you can contribute to our team!</p>
-          
-          <p>Best regards,<br><strong>The HireRankerAI Interview Team</strong></p>
+        
+        <p>You requested a password reset for your HireRankerAI account. Use the code below to reset your password:</p>
+        
+        <div class="reset-code">
+          <div class="code">${resetCode}</div>
+          <p style="margin-top: 10px; color: #3b82f6; font-weight: 500;">Enter this code to reset your password</p>
         </div>
+        
+        <div class="security-notice">
+          <strong>Security Notice:</strong> This code will expire in 10 minutes. If you didn't request this password reset, please ignore this email and your password will remain unchanged.
+        </div>
+        
         <div class="footer">
-          <div class="footer-brand">HireRankerAI</div>
-          <p>This is an automated message. Please do not reply to this email.<br>© 2024 HireRankerAI. All rights reserved.</p>
+          <p>Best regards,<br>The HireRankerAI Team</p>
         </div>
       </div>
     </body>
@@ -1571,12 +319,440 @@ export function createVideoCallInvitationEmailHTML(
   `
 }
 
-export function createRejectionEmailHTML(
+export function createPasswordChangeEmailHTML(userName: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Password Changed - HireRankerAI</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body { 
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+          line-height: 1.6; 
+          color: #374151; 
+          background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 50%, #e0f2fe 100%);
+          margin: 0;
+          padding: 20px;
+          min-height: 100vh;
+        }
+        
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 25px 50px rgba(59, 130, 246, 0.1);
+          padding: 40px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <h1>Password Changed Successfully</h1>
+        <p>Hello ${userName},</p>
+        <p>Your password has been successfully changed for your HireRankerAI account.</p>
+        <p>If you didn't make this change, please contact our support team immediately.</p>
+        <p>Your account security is important to us.</p>
+      </div>
+    </body>
+    </html>
+  `
+}
+
+export function createAccountDeletionEmailHTML(userName: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Account Deletion Confirmation - HireRankerAI</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body { 
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+          line-height: 1.6; 
+          color: #374151; 
+          background: linear-gradient(135deg, #fef2f2 0%, #fef7f7 50%, #fee2e2 100%);
+          margin: 0;
+          padding: 20px;
+          min-height: 100vh;
+        }
+        
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 25px 50px rgba(239, 68, 68, 0.1);
+          padding: 40px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <h1>Account Deletion Confirmation</h1>
+        <p>Hello ${userName},</p>
+        <p>Your HireRankerAI account has been successfully deleted as requested.</p>
+        <p>All your data has been permanently removed from our systems.</p>
+        <p>Thank you for using HireRankerAI. We're sorry to see you go!</p>
+      </div>
+    </body>
+    </html>
+  `
+}
+
+export function createVideoCallInvitationEmailHTML(
   candidateName: string,
-  position: string,
-  ranking: number,
-  score: number,
+  meetingLink: string,
+  meetingTime: string,
+  position?: string,
 ): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Video Interview Invitation - HireRankerAI</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body { 
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+          line-height: 1.6; 
+          color: #374151; 
+          background: linear-gradient(135deg, #f3e8ff 0%, #f5f3ff 50%, #ede9fe 100%);
+          margin: 0;
+          padding: 20px;
+          min-height: 100vh;
+        }
+        
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 25px 50px rgba(139, 92, 246, 0.1);
+          padding: 40px;
+        }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        
+        .logo {
+          font-size: 24px;
+          font-weight: 700;
+          color: #8b5cf6;
+          margin-bottom: 10px;
+        }
+        
+        .meeting-button {
+          display: inline-block;
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          color: white;
+          padding: 16px 32px;
+          text-decoration: none;
+          border-radius: 12px;
+          font-weight: 600;
+          margin: 20px 0;
+          text-align: center;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        
+        .meeting-details {
+          background: #f8fafc;
+          padding: 24px;
+          border-radius: 12px;
+          margin: 20px 0;
+          border-left: 4px solid #8b5cf6;
+        }
+        
+        .preparation-tips {
+          background: #f0fdf4;
+          padding: 20px;
+          border-radius: 12px;
+          margin: 20px 0;
+        }
+        
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 14px;
+          color: #6b7280;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <div class="logo">🎥 HireRankerAI</div>
+          <h1>Video Interview Invitation</h1>
+        </div>
+        
+        <p>Hello <strong>${candidateName}</strong>,</p>
+        <p>Congratulations! You've been selected for a video interview${position ? ` for the <strong>${position}</strong> position` : ""}.</p>
+        
+        <div class="meeting-details">
+          <h3 style="color: #8b5cf6; margin-bottom: 15px;">📅 Meeting Details</h3>
+          <p><strong>Date & Time:</strong> ${meetingTime}</p>
+          <p><strong>Duration:</strong> 30-45 minutes</p>
+          <p><strong>Format:</strong> Video Call</p>
+        </div>
+        
+        <div style="text-align: center;">
+          <a href="${meetingLink}" class="meeting-button">🚀 Join Video Call</a>
+        </div>
+        
+        <div class="preparation-tips">
+          <h3 style="color: #059669; margin-bottom: 15px;">💡 Preparation Tips</h3>
+          <ul style="margin-left: 20px;">
+            <li>Test your camera and microphone 15 minutes before the call</li>
+            <li>Find a quiet, well-lit space with a professional background</li>
+            <li>Have your resume and portfolio ready to reference</li>
+            <li>Prepare thoughtful questions about the role and company</li>
+            <li>Ensure stable internet connection</li>
+          </ul>
+        </div>
+        
+        <p>We're excited to learn more about you and discuss how you can contribute to our team!</p>
+        
+        <div class="footer">
+          <p>Best regards,<br>The HireRankerAI Team</p>
+          <p style="margin-top: 10px;"><em>If you have any technical issues joining the call, please contact us immediately.</em></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+}
+
+export function createApprovalEmailHTML(candidateName: string, position: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Application Approved! - HireRankerAI</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body { 
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+          line-height: 1.6; 
+          color: #374151; 
+          background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #dcfce7 100%);
+          margin: 0;
+          padding: 20px;
+          min-height: 100vh;
+        }
+        
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 25px 50px rgba(5, 150, 105, 0.1);
+          padding: 40px;
+        }
+        
+        .celebration {
+          text-align: center;
+          font-size: 64px;
+          margin: 20px 0;
+          animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-10px); }
+          60% { transform: translateY(-5px); }
+        }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        
+        .logo {
+          font-size: 24px;
+          font-weight: 700;
+          color: #059669;
+          margin-bottom: 10px;
+        }
+        
+        .next-steps {
+          background: #f0fdf4;
+          padding: 24px;
+          border-radius: 12px;
+          margin: 20px 0;
+          border-left: 4px solid #059669;
+        }
+        
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 14px;
+          color: #6b7280;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <div class="logo">✅ HireRankerAI</div>
+        </div>
+        
+        <div class="celebration">🎉</div>
+        <h1 style="text-align: center; color: #059669; margin-bottom: 20px;">Application Approved!</h1>
+        
+        <p>Dear <strong>${candidateName}</strong>,</p>
+        <p>Great news! Your application for the <strong>${position}</strong> position has been approved and moved to the next stage of our hiring process.</p>
+        
+        <div class="next-steps">
+          <h3 style="color: #059669; margin-bottom: 15px;">🚀 What's Next?</h3>
+          <ul style="margin-left: 20px;">
+            <li>Our HR team will review your application in detail</li>
+            <li>You may be contacted for a phone screening within 2-3 business days</li>
+            <li>If selected, you'll be invited for a video interview</li>
+            <li>We'll keep you updated throughout the process</li>
+          </ul>
+        </div>
+        
+        <p>Your qualifications and experience caught our attention, and we're excited to learn more about you!</p>
+        <p>Thank you for your interest in joining our team.</p>
+        
+        <div class="footer">
+          <p>Best regards,<br>The HireRankerAI Team</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+}
+
+export function createCongratulationsEmailHTML(candidateName: string, position: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Congratulations! - HireRankerAI</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body { 
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+          line-height: 1.6; 
+          color: #374151; 
+          background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #dcfce7 100%);
+          margin: 0;
+          padding: 20px;
+          min-height: 100vh;
+        }
+        
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 25px 50px rgba(5, 150, 105, 0.1);
+          padding: 40px;
+        }
+        
+        .celebration {
+          text-align: center;
+          font-size: 48px;
+          margin: 20px 0;
+        }
+        
+        .next-steps {
+          background: #f0fdf4;
+          padding: 20px;
+          border-radius: 12px;
+          margin: 20px 0;
+          border-left: 4px solid #059669;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="celebration">🎉</div>
+        <h1>Congratulations, ${candidateName}!</h1>
+        <p>We're thrilled to inform you that you've been selected for the <strong>${position}</strong> position!</p>
+        
+        <div class="next-steps">
+          <h3>Next Steps:</h3>
+          <ul>
+            <li>HR will contact you within 2 business days</li>
+            <li>We'll discuss compensation and benefits</li>
+            <li>You'll receive your official offer letter</li>
+            <li>We'll schedule your onboarding process</li>
+          </ul>
+        </div>
+        
+        <p>Your skills and experience impressed our team, and we can't wait to have you join us!</p>
+        <p>Welcome to the team!</p>
+        
+        <p>Best regards,<br>The HireRankerAI Team</p>
+      </div>
+    </body>
+    </html>
+  `
+}
+
+export function createRejectionEmailHTML(candidateName: string, position: string): string {
   return `
     <!DOCTYPE html>
     <html>
@@ -1597,7 +773,7 @@ export function createRejectionEmailHTML(
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
           line-height: 1.6; 
           color: #374151; 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%);
+          background: linear-gradient(135deg, #fefbf3 0%, #fef7ed 50%, #fed7aa 100%);
           margin: 0;
           padding: 20px;
           min-height: 100vh;
@@ -1610,181 +786,42 @@ export function createRejectionEmailHTML(
           backdrop-filter: blur(20px);
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 25px 50px rgba(107, 114, 128, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(107, 114, 128, 0.1);
+          box-shadow: 0 25px 50px rgba(251, 146, 60, 0.1);
+          padding: 40px;
         }
         
-        .header { 
-          background: linear-gradient(135deg, #6B7280 0%, #4B5563 50%, #374151 100%);
-          color: white; 
-          padding: 40px 30px; 
-          text-align: center;
-          position: relative;
-          overflow: hidden; 40px 30px;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 28px;
-          font-weight: 700;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          position: relative;
-          z-index: 1;
-        }
-        
-        .header p {
-          margin: 10px 0 0 0;
-          font-size: 16px;
-          opacity: 0.9;
-          position: relative;
-          z-index: 1;
-        }
-        
-        .content { 
-          background: white;
-          padding: 40px 30px; 
-        }
-        
-        .stats { 
-          background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%); 
-          border: 2px solid #D1D5DB; 
-          padding: 25px; 
-          border-radius: 16px; 
-          margin: 25px 0; 
-        }
-        
-        .stats h3 {
-          color: #374151;
-          margin-top: 0;
-          font-size: 18px;
-          font-weight: 600;
-        }
-        
-        .stats p {
-          margin: 8px 0;
-          font-weight: 500;
-          color: #6B7280;
-        }
-        
-        .encouragement { 
-          background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); 
-          border: 2px solid #BFDBFE; 
-          padding: 25px; 
-          border-radius: 16px; 
-          margin: 25px 0; 
-        }
-        
-        .encouragement h3 {
-          color: #1D4ED8;
-          margin-top: 0;
-          font-size: 18px;
-          font-weight: 600;
-        }
-        
-        .encouragement p {
-          color: #374151;
-          margin: 15px 0;
-        }
-        
-        .encouragement ul {
-          margin: 15px 0;
-          padding-left: 20px;
-          color: #6B7280;
-        }
-        
-        .encouragement li {
-          margin: 8px 0;
-        }
-        
-        .footer { 
-          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-          text-align: center; 
-          padding: 30px;
-          color: #6b7280; 
-          font-size: 14px;
-          border-top: 1px solid #e5e7eb;
-        }
-        
-        .footer-brand {
-          font-weight: 600;
-          color: #6B7280;
-          margin-bottom: 8px;
-        }
-        
-        .divider {
-          height: 1px;
-          background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
-          margin: 25px 0;
-        }
-        
-        @keyframes shimmer {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 600px) {
-          body { padding: 10px; }
-          .email-container { border-radius: 16px; }
-          .header { padding: 30px 20px; }
-          .header h1 { font-size: 24px; }
-          .content { padding: 30px 20px; }
+        .encouragement {
+          background: #fef7ed;
+          padding: 20px;
+          border-radius: 12px;
+          margin: 20px 0;
+          border-left: 4px solid #f59e0b;
         }
       </style>
     </head>
     <body>
       <div class="email-container">
-        <div class="header">
-          <h1>📋 Application Update</h1>
-          <p>Thank you for your interest in our position</p>
+        <h1>Thank you for your application</h1>
+        <p>Dear ${candidateName},</p>
+        
+        <p>Thank you for your interest in the <strong>${position}</strong> position and for taking the time to interview with us.</p>
+        
+        <p>After careful consideration, we have decided to move forward with another candidate whose experience more closely aligns with our current needs.</p>
+        
+        <div class="encouragement">
+          <h3>We were impressed by:</h3>
+          <ul>
+            <li>Your professional background and skills</li>
+            <li>Your enthusiasm for the role</li>
+            <li>Your thoughtful responses during the interview</li>
+          </ul>
         </div>
-        <div class="content">
-          <p>Dear <strong>${candidateName}</strong>,</p>
-          <p>Thank you for taking the time to apply for the <strong>${position}</strong> position with HireRankerAI. We appreciate your interest and the effort you put into your application.</p>
-          
-          <div class="stats">
-            <h3>📊 Your Application Results:</h3>
-            <p>• <strong>Position:</strong> ${position}</p>
-            <p>• <strong>Status:</strong> Not Selected for Interview</p>
-          </div>
-
-          <p>After careful consideration of all applications, we have decided to move forward with other candidates whose qualifications more closely match our current requirements for this specific role.</p>
-
-          <div class="encouragement">
-            <h3>💪 Keep Moving Forward</h3>
-            <p>Please don't let this discourage you. Your skills and experience are valuable, and we encourage you to:</p>
-            <ul>
-              <li>Continue developing your professional skills and expertise</li>
-              <li>Apply for future opportunities that match your background</li>
-              <li>Keep building your experience in your field of interest</li>
-              <li>Consider feedback and areas for professional growth</li>
-            </ul>
-            <p>We will keep your application on file and may contact you for future positions that better align with your background and our needs.</p>
-          </div>
-
-          <div class="divider"></div>
-
-          <p>We wish you the best of luck in your job search and future career endeavors. Thank you again for considering HireRankerAI as a potential employer.</p>
-          
-          <p>Best regards,<br><strong>The HireRankerAI Talent Acquisition Team</strong></p>
-        </div>
-        <div class="footer">
-          <div class="footer-brand">HireRankerAI</div>
-          <p>This is an automated message from our hiring system.<br>© 2024 HireRankerAI. All rights reserved.</p>
-        </div>
+        
+        <p>We encourage you to apply for future opportunities that match your qualifications. We'll keep your information on file and reach out if a suitable position becomes available.</p>
+        
+        <p>We wish you the best of luck in your job search and future endeavors.</p>
+        
+        <p>Best regards,<br>The HireRankerAI Team</p>
       </div>
     </body>
     </html>

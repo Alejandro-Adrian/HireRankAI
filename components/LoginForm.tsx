@@ -69,6 +69,7 @@ export default function LoginForm({
 
       <div className="flex glass-emerald rounded-2xl p-1.5 mb-8 animate-slide-in-left">
         <button
+          data-testid="signin-tab-button"
           onClick={() => setActiveTab("signin")}
           className={`flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all duration-300 font-work-sans ${
             activeTab === "signin"
@@ -79,6 +80,7 @@ export default function LoginForm({
           Sign In
         </button>
         <button
+          data-testid="signup-tab-button"
           onClick={() => {
             setActiveTab("signup")
             onSwitchToSignup()
@@ -96,6 +98,7 @@ export default function LoginForm({
       <form onSubmit={handleSubmit} className="space-y-6 animate-slide-in-right">
         <div className="relative group animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -103,13 +106,17 @@ export default function LoginForm({
             className="w-full px-4 py-4 bg-white/50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-600 hover-lift peer font-open-sans"
             required
           />
-          <label className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-700 dark:peer-placeholder-shown:text-slate-300 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans">
+          <label
+            htmlFor="email"
+            className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-700 dark:peer-placeholder-shown:text-slate-300 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans"
+          >
             Email Address
           </label>
         </div>
 
         <div className="relative group animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           <input
+            id="password"
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -117,13 +124,17 @@ export default function LoginForm({
             className="w-full px-4 py-4 pr-12 bg-white/50 dark:bg-slate-800/50 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-300 hover:border-emerald-300 dark:hover:border-emerald-600 hover-lift peer font-open-sans"
             required
           />
-          <label className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-700 dark:peer-placeholder-shown:text-slate-300 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans">
+          <label
+            htmlFor="password"
+            className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-700 dark:peer-placeholder-shown:text-slate-300 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans"
+          >
             Password
           </label>
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 hover:scale-110 group"
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
             <div className="p-1 rounded-lg group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/20 transition-colors duration-200">
               {showPassword ? (
@@ -173,6 +184,7 @@ export default function LoginForm({
         )}
 
         <button
+          data-testid="login-submit-button"
           type="submit"
           disabled={loading}
           className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-4 px-6 rounded-2xl font-semibold hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-xl active:scale-95 ripple-effect animate-fade-in-up font-work-sans"

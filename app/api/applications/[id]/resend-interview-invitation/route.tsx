@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import nodemailer from "nodemailer"
+import { sendEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -9,13 +9,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const { notes } = await request.json()
     console.log("[v0] Request notes:", notes)
-
-    console.log(
-      "[v0] Environment check - EMAIL_USER:",
-      !!process.env.EMAIL_USER,
-      "EMAIL_PASS:",
-      !!process.env.EMAIL_PASS,
-    )
 
     const supabase = createClient()
 
@@ -43,15 +36,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       console.log("[v0] Application not selected for interview")
       return NextResponse.json({ error: "Application not selected for interview" }, { status: 400 })
     }
-
-    // Create email transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    })
 
     // Email content
     const position = application.rankings?.position || "Position"
@@ -105,29 +89,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       </html>
     `
 
-    const textContent = `
-      Congratulations ${application.applicant_name}!
-      
-      You have been selected for an interview for the ${position} position at ${company}.
-      
-      Our HR team will contact you shortly with interview details.
-      
-      ${notes ? `Additional Notes: ${notes}` : ""}
-      
-      Thank you for your interest in joining our team!
-      
-      Best regards,
-      ${company} HR Team
-    `
-
-    // Send email
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const emailResult = await sendEmail({
       to: application.applicant_email,
       subject: `Interview Invitation - ${position} at ${company}`,
-      text: textContent,
       html: htmlContent,
     })
+
+    if (!emailResult.success) {
+      console.error("[v0] Email sending failed:", emailResult.error)
+      return NextResponse.json({ error: "Failed to send invitation email" }, { status: 500 })
+    }
 
     console.log("[v0] Email sent successfully")
 

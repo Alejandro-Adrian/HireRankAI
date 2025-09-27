@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 function isBuildTime() {
-  return false // Always false for local development
+  return process.env.NODE_ENV === "production" && !process.env.RAILWAY_ENVIRONMENT && !process.env.VERCEL_ENV
 }
 
 export async function middleware(request: NextRequest) {
@@ -11,12 +11,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
-  const SUPABASE_URL = "https://zcetut0jqacqhqhqhqhq.supabase.co"
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4NzI4MDAsImV4cCI6MjA1MjQ0ODgwMH0.example_anon_key"
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("[v0] Missing Supabase environment variables")
+  // Skip middleware if Supabase is not configured
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("Supabase not configured, skipping auth middleware")
+    return NextResponse.next({ request })
+  }
+
+  if (supabaseUrl.includes("ixqjqjqjqjqjqjqj") || supabaseAnonKey.includes("example")) {
+    console.error("Supabase environment variables contain placeholder values, skipping auth middleware")
     return NextResponse.next({ request })
   }
 
@@ -24,35 +29,31 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
-  try {
-    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
       },
-    })
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+        supabaseResponse = NextResponse.next({
+          request,
+        })
+        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+      },
+    },
+  })
 
-    // IMPORTANT: Avoid writing any logic between createServerClient and
-    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
+  // IMPORTANT: Avoid writing any logic between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
 
+  try {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-
-    console.log("[v0] Middleware - User:", user ? "Authenticated" : "Not authenticated")
   } catch (error) {
-    console.error("[v0] Auth check failed in middleware:", error)
-    // Return early if Supabase client creation fails
-    return NextResponse.next({ request })
+    console.warn("Auth check failed in middleware:", error)
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
