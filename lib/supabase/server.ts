@@ -1,23 +1,28 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-const SUPABASE_URL = "https://zcetut0jqacqhqhqhqhq.supabase.co"
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4NzI4MDAsImV4cCI6MjA1MjQ0ODgwMH0.example_anon_key"
-const SUPABASE_SERVICE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjg3MjgwMCwiZXhwIjoyMDUyNDQ4ODAwfQ.example_service_key"
-
 function validateEnvironmentVariables() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn("Supabase environment variables are not configured")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("Missing Supabase environment variables:", {
+      url: !!supabaseUrl,
+      key: !!supabaseAnonKey,
+    })
     return null
   }
 
-  return { supabaseUrl: SUPABASE_URL, supabaseAnonKey: SUPABASE_ANON_KEY }
+  if (supabaseUrl.includes("ixqjqjqjqjqjqjqj") || supabaseAnonKey.includes("example")) {
+    console.error("Supabase environment variables contain placeholder values")
+    return null
+  }
+
+  return { supabaseUrl, supabaseAnonKey }
 }
 
 function isBuildTime() {
-  return false
+  return process.env.NODE_ENV === "production" && !process.env.RAILWAY_ENVIRONMENT && !process.env.VERCEL_ENV
 }
 
 function getSafeCookieStore() {
@@ -117,14 +122,25 @@ export function createAdminClient() {
     return createMockClient()
   }
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    console.warn("Supabase admin environment variables are not configured")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("Missing Supabase admin environment variables:", {
+      url: !!supabaseUrl,
+      serviceKey: !!supabaseServiceKey,
+    })
     return createClient() // Fallback to regular client
+  }
+
+  if (supabaseUrl.includes("ixqjqjqjqjqjqjqj") || supabaseServiceKey.includes("example")) {
+    console.error("Supabase admin environment variables contain placeholder values")
+    return createClient()
   }
 
   const cookieStore = getSafeCookieStore()
 
-  return createServerClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  return createServerClient(supabaseUrl, supabaseServiceKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()

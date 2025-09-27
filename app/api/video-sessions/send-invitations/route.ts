@@ -54,7 +54,13 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        const participantUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/video-call/${session.meeting_id}`
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+        if (!siteUrl) {
+          console.error("NEXT_PUBLIC_SITE_URL environment variable is not set")
+          failureCount++
+          continue
+        }
+        const participantUrl = `${siteUrl}/video-call/${session.meeting_id}`
 
         const emailResult = await sendEmail({
           to: candidateEmail,

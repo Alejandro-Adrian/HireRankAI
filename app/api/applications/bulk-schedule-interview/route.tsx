@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-import nodemailer from "nodemailer"
+import { createAdminClient } from "@/lib/supabase/server"
+import { sendEmail } from "@/lib/email"
 import { v4 as uuidv4 } from "uuid"
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const supabase = createAdminClient()
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,14 +23,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Applications not found" }, { status: 404 })
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    if (!siteUrl) {
+      console.error("NEXT_PUBLIC_SITE_URL environment variable is not set")
+      return NextResponse.json({ error: "Site URL configuration missing" }, { status: 500 })
+    }
+
     const results = []
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    })
 
     // Process each application
     for (const application of applications) {
@@ -39,7 +38,7 @@ export async function POST(request: NextRequest) {
         const meetingId = uuidv4()
         const hrAccessToken = uuidv4()
         const applicantAccessToken = uuidv4()
-        const meetingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/video-call/${meetingId}` // Fixed meeting URL to match actual video call page route
+        const meetingUrl = `${siteUrl}/video-call/${meetingId}`
 
         // Update application
         const { error: updateError } = await supabase
@@ -145,15 +144,17 @@ export async function POST(request: NextRequest) {
           </html>
         `
 
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
+        const emailResult = await sendEmail({
           to: application.applicant_email,
           subject: `Interview Invitation - Congratulations!`,
           html: emailHtml,
-          text: `Congratulations ${application.applicant_name}! You've been selected for an interview scheduled ${dateTimeText}. Join the video call at: ${meetingUrl}?token=${applicantAccessToken}`,
-        }
+        })
 
-        await transporter.sendMail(mailOptions)
+        if (!emailResult.success) {
+          console.error(`Email sending failed for ${application.applicant_email}:`, emailResult.error)
+          results.push({ id: application.id, success: false, error: "Email failed" })
+          continue
+        }
 
         results.push({
           id: application.id,

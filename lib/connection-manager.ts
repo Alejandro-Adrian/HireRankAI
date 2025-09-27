@@ -12,22 +12,30 @@ export const connections = new Map<string, Connection>()
 export const pendingMessages = new Map<string, any[]>()
 
 // Cleanup old connections every 30 seconds
-setInterval(() => {
-  const now = Date.now()
-  const timeout = 60000 // 1 minute timeout
+let cleanupInterval: NodeJS.Timeout | null = null
 
-  for (const [key, connection] of connections.entries()) {
-    if (now - connection.lastSeen > timeout) {
-      console.log("[v0] Cleaning up stale connection:", key)
-      try {
-        connection.controller.close()
-      } catch (error) {
-        // Connection already closed
+// Initialize cleanup only in runtime environment
+if ((typeof window === "undefined" && process.env.NODE_ENV !== "production") || process.env.VERCEL_ENV) {
+  // Only start cleanup in actual runtime, not during build
+  if (process.env.NEXT_PHASE !== "phase-production-build") {
+    cleanupInterval = setInterval(() => {
+      const now = Date.now()
+      const timeout = 60000 // 1 minute timeout
+
+      for (const [key, connection] of connections.entries()) {
+        if (now - connection.lastSeen > timeout) {
+          console.log("[v0] Cleaning up stale connection:", key)
+          try {
+            connection.controller.close()
+          } catch (error) {
+            // Connection already closed
+          }
+          connections.delete(key)
+        }
       }
-      connections.delete(key)
-    }
+    }, 30000)
   }
-}, 30000)
+}
 
 export function broadcastToMeeting(meetingId: string, message: any, excludePeerId?: string) {
   const meetingConnections = Array.from(connections.entries())

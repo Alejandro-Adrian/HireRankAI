@@ -1,10 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createUser, findUserByEmail, storeVerificationCode } from "@/lib/storage"
-import { sendEmail, generateVerificationCode, createVerificationEmailHTML } from "@/lib/email"
+import { sendEmail, generateVerificationCode, createVerificationEmailHTML, testEmailConnection } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[v0] 🚀 Signup request received")
+
+    const connectionTest = await testEmailConnection()
+    if (!connectionTest.success) {
+      console.error("[v0] ❌ Email connection test failed:", connectionTest.error)
+      return NextResponse.json({ error: "Email service unavailable. Please try again later." }, { status: 503 })
+    }
+
     const { email, password, firstname, lastname } = await request.json()
+    console.log("[v0] 📝 Request data:", { email, firstname, lastname, passwordLength: password?.length })
 
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return NextResponse.json({ error: "Email and password are required and must be strings" }, { status: 400 })
@@ -70,20 +79,27 @@ export async function POST(request: NextRequest) {
     const sanitizedFirstname = firstname.trim()
     const sanitizedLastname = lastname.trim()
 
+    console.log("[v0] 👤 Creating user with email:", sanitizedEmail)
     const user = await createUser(sanitizedEmail, password, sanitizedFirstname, sanitizedLastname)
     if (!user) {
+      console.error("[v0] ❌ Failed to create user in database")
       return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
     }
+    console.log("[v0] ✅ User created successfully with ID:", user.id)
 
     // Generate verification code
+    console.log("[v0] 🔢 Generating verification code")
     const verificationCode = generateVerificationCode()
     const codeStored = await storeVerificationCode(sanitizedEmail, verificationCode, "verification")
 
     if (!codeStored) {
+      console.error("[v0] ❌ Failed to store verification code")
       return NextResponse.json({ error: "Failed to store verification code" }, { status: 500 })
     }
+    console.log("[v0] ✅ Verification code stored successfully")
 
     // Send verification email
+    console.log("[v0] 📧 Attempting to send verification email")
     const emailResult = await sendEmail({
       to: sanitizedEmail,
       subject: "Verify Your Email Address",
@@ -91,9 +107,13 @@ export async function POST(request: NextRequest) {
     })
 
     if (!emailResult.success) {
-      console.error("Email sending failed:", emailResult.error)
-      return NextResponse.json({ error: "Failed to send verification email. Please try again." }, { status: 500 })
+      console.error("[v0] ❌ Email sending failed:", emailResult.error)
+      const errorMsg = emailResult.error?.includes("timeout")
+        ? "Email service is taking too long to respond. Please try again."
+        : "Failed to send verification email. Please try again."
+      return NextResponse.json({ error: errorMsg }, { status: 500 })
     }
+    console.log("[v0] ✅ Verification email sent successfully")
 
     return NextResponse.json({
       message: "User created successfully. Please check your email for verification code.",
@@ -101,7 +121,7 @@ export async function POST(request: NextRequest) {
       requiresVerification: true,
     })
   } catch (error) {
-    console.error("Signup error:", error)
+    console.error("[v0] ❌ Signup error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

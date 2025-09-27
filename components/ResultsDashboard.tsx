@@ -204,7 +204,7 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   const handleSelectForInterview = async (applicationId: string, notes = "") => {
     setSelectingForInterview(applicationId)
     try {
-      const response = await fetch(`/api/applications/${applicationId}/select-interview`, {
+      const response = await fetch(`/api/applications/${applicationId}/select-for-interview`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes }),
@@ -230,7 +230,7 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
   const handleBulkSelectForInterview = async () => {
     setBulkSelectingForInterview(true)
     try {
-      const response = await fetch(`/api/applications/bulk-select-interview`, {
+      const response = await fetch(`/api/applications/bulk-schedule-interview`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1571,11 +1571,51 @@ export default function ResultsDashboard({ rankingId, onBack, onNotification }: 
                                 className="p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-300 animate-slide-in-left"
                                 style={{ animationDelay: `${index * 0.1}s` }}
                               >
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 font-work-sans capitalize">
+                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 font-work-sans capitalize">
                                   {key.replace(/_/g, " ")}
                                 </div>
-                                <div className="text-xs text-gray-600 dark:text-gray-400 font-open-sans">
-                                  {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}
+                                <div className="text-sm text-gray-600 dark:text-gray-400 font-open-sans">
+                                  {typeof value === "object" && value !== null ? (
+                                    <div className="space-y-2">
+                                      {Object.entries(value).map(([subKey, subValue]) => (
+                                        <div key={subKey} className="flex justify-between items-start">
+                                          <span className="font-medium capitalize text-gray-700 dark:text-gray-300">
+                                            {subKey.replace(/_/g, " ")}:
+                                          </span>
+                                          <span className="text-right ml-2 max-w-xs">
+                                            {subKey === "score" || subKey === "maxScore" ? (
+                                              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                                {subValue}
+                                              </span>
+                                            ) : subKey === "reasoning" ? (
+                                              <span className="text-gray-600 dark:text-gray-400 text-xs">
+                                                {String(subValue)}
+                                              </span>
+                                            ) : subKey === "matched_items" && Array.isArray(subValue) ? (
+                                              <div className="flex flex-wrap gap-1">
+                                                {subValue.length > 0 ? (
+                                                  subValue.map((item, idx) => (
+                                                    <span
+                                                      key={idx}
+                                                      className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs"
+                                                    >
+                                                      {String(item)}
+                                                    </span>
+                                                  ))
+                                                ) : (
+                                                  <span className="text-gray-400 text-xs">None</span>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <span>{String(subValue)}</span>
+                                            )}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span>{String(value)}</span>
+                                  )}
                                 </div>
                               </div>
                             ))

@@ -2,14 +2,10 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-const SUPABASE_URL = "https://zcetut0jqacqhqhqhqhq.supabase.co"
-const SUPABASE_SERVICE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjZXR1dDBqcWFjcWhxaHFocWhxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjg3MjgwMCwiZXhwIjoyMDUyNDQ4ODAwfQ.example_service_key"
-
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value

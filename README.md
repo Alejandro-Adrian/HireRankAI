@@ -32,10 +32,10 @@ HireRankerAI is a comprehensive hiring management system that uses AI to rank an
 
 3. Set up environment variables:
    \`\`\`bash
-   cp .env.local.example .env.local
+   cp .env.example .env
    \`\`\`
 
-4. Configure your environment variables in `.env.local`:
+4. Configure your environment variables in `.env`:
    - Get your Supabase URL and keys from your Supabase project dashboard
    - Add your email credentials for SMTP (Gmail app password recommended)
 
@@ -71,7 +71,29 @@ Run `scripts/setup_database.sql` to create all necessary tables, indexes, and fu
 Run `scripts/reset_database.sql` to clear all data while preserving table structure (useful for fresh deployments).
 
 ## Deployment
-See `DEPLOYMENT.md` for comprehensive deployment instructions for various hosting platforms including Render, Railway, Heroku, and custom servers.
+
+### Railway Deployment
+1. Connect your GitHub repository to Railway
+2. Set environment variables in Railway dashboard using the values from your `.env` file
+3. Railway will automatically detect and deploy your Next.js application
+4. Make sure to set `NODE_ENV=production` in Railway environment variables
+
+### Render Deployment
+1. Connect your GitHub repository to Render
+2. Create a new Web Service
+3. Set environment variables in Render dashboard using the values from your `.env` file
+4. Use the following build and start commands:
+   - Build Command: `npm run build`
+   - Start Command: `npm start`
+5. Make sure to set `NODE_ENV=production` in Render environment variables
+
+### Environment Variables for Production
+For Railway and Render, make sure to set these environment variables in your deployment platform:
+- All variables from your `.env` file
+- `NODE_ENV=production`
+- `PORT=3000` (or let the platform set it automatically)
+
+See `DEPLOYMENT.md` for comprehensive deployment instructions for various hosting platforms.
 
 ## Troubleshooting
 
