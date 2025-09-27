@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: hireranker-ai
+    env: node
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PNPM_VERSION
+        value: latest
