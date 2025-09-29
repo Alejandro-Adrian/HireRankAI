@@ -12,7 +12,7 @@ TRUNCATE TABLE webrtc_signaling CASCADE;
 TRUNCATE TABLE video_sessions CASCADE;
 TRUNCATE TABLE criteria CASCADE;
 TRUNCATE TABLE rankings CASCADE;
-TRUNCATE TABLE users CASCADE;l
+TRUNCATE TABLE users CASCADE;
 
 -- Re-enable foreign key checks
 SET session_replication_role = DEFAULT;
