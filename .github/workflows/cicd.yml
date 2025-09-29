@@ -92,3 +92,7 @@ jobs:
 
       - name: Run sample command
         run: echo "Running check complete on ${{ runner.os }}"
+
+      - name: Run unit tests
+        run: npm test
+
