@@ -4,7 +4,6 @@ import {
   Users,
   Calendar,
   CheckCircle,
-  Bell,
   Settings,
   LogOut,
   Plus,
@@ -19,7 +18,6 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import { createPortal } from "react-dom"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -27,6 +25,8 @@ import SettingsComponent from "./Settings"
 import RankingBuilder from "./RankingBuilder"
 import ResultsDashboard from "./ResultsDashboard"
 import VideoCallManager from "./VideoCallManager"
+import NotificationCenter from "./NotificationCenter"
+import { useRouter } from "next/navigation"
 
 interface DashboardProps {
   user: any
@@ -57,12 +57,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [filterPosition, setFilterPosition] = useState<string>("all")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("newest")
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: "Welcome to HireRank AI!", type: "info", read: false },
-  ])
-  const [showNotifications, setShowNotifications] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
-  const [notificationButtonRef, setNotificationButtonRef] = useState<HTMLButtonElement | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     fetchRankings()
@@ -82,42 +78,25 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
   }
 
-  const addNotification = (message: string, type: "success" | "error" | "info" = "info") => {
-    const newNotification = {
-      id: Date.now(),
-      message,
-      type,
-      read: false,
-    }
-    setNotifications((prev) => [newNotification, ...prev])
-  }
-
-  const markAsRead = (id: number) => {
-    setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)))
-  }
-
-  const unreadCount = notifications.filter((n) => !n.read).length
-
   const handleCreateRanking = () => {
-    window.location.href = "/rankings/create"
+    router.push("/rankings/create")
   }
 
   const handleEditRanking = (ranking: Ranking) => {
-    setSelectedRanking(ranking)
-    setShowRankingBuilder(true)
+    router.push(`/rankings/${ranking.id}/edit`)
   }
 
   const handleCopyLink = (linkId: string) => {
     const applicationUrl = `${window.location.origin}/apply/${linkId}`
     navigator.clipboard.writeText(applicationUrl)
-    addNotification("Application link copied to clipboard!", "success")
+    // addNotification("Application link copied to clipboard!", "success") // Replaced by NotificationCenter
   }
 
   const handleRankingComplete = () => {
     setShowRankingBuilder(false)
     setSelectedRanking(null)
     fetchRankings() // Refresh the rankings list
-    addNotification("Ranking saved successfully!", "success")
+    // addNotification("Ranking saved successfully!", "success") // Replaced by NotificationCenter
   }
 
   const handleViewApplications = (ranking: Ranking) => {
@@ -137,15 +116,15 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       })
 
       if (response.ok) {
-        addNotification("Ranking deleted successfully!", "success")
+        // addNotification("Ranking deleted successfully!", "success") // Replaced by NotificationCenter
         fetchRankings() // Refresh the rankings list
       } else {
         const errorData = await response.json()
-        addNotification(errorData.error || "Failed to delete ranking", "error")
+        // addNotification(errorData.error || "Failed to delete ranking", "error") // Replaced by NotificationCenter
       }
     } catch (error) {
       console.error("Error deleting ranking:", error)
-      addNotification("An error occurred while deleting the ranking", "error")
+      // addNotification("An error occurred while deleting the ranking", "error") // Replaced by NotificationCenter
     }
   }
 
@@ -216,14 +195,14 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     switch (metricTitle) {
       case "Active Rankings":
         setFilterStatus("active")
-        addNotification("Filtered to show active rankings", "info")
+        // addNotification("Filtered to show active rankings", "info") // Replaced by NotificationCenter
         break
       case "Total Rankings":
         setFilterStatus("all")
         setFilterPosition("all")
         setSearchQuery("")
         setSortBy("newest")
-        addNotification("Showing all rankings", "info")
+        // addNotification("Showing all rankings", "info") // Replaced by NotificationCenter
         document.querySelector(".bg-white.rounded-lg.border.border-gray-200")?.scrollIntoView({ behavior: "smooth" })
         break
       case "This Month":
@@ -235,17 +214,17 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         })
         if (thisMonthRankings.length > 0) {
           setSortBy("newest")
-          addNotification(`Showing ${thisMonthRankings.length} rankings created this month`, "info")
+          // addNotification(`Showing ${thisMonthRankings.length} rankings created this month`, "info") // Replaced by NotificationCenter
         } else {
-          addNotification("No rankings created this month", "info")
+          // addNotification("No rankings created this month", "info") // Replaced by NotificationCenter
         }
         break
       case "Total Applications":
         if (rankings.length > 0) {
           setSortBy("most-applications")
-          addNotification("Sorted by most applications", "info")
+          // addNotification("Sorted by most applications", "info") // Replaced by NotificationCenter
         } else {
-          addNotification("No rankings available to view applications", "info")
+          // addNotification("No rankings available to view applications", "info") // Replaced by NotificationCenter
         }
         break
       default:
@@ -258,7 +237,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       <SettingsComponent
         onBack={() => setShowSettings(false)}
         userEmail={user.email}
-        onNotification={addNotification}
+        // onNotification={addNotification} // Replaced by NotificationCenter
       />
     )
   }
@@ -269,7 +248,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         ranking={selectedRanking}
         onBack={() => setShowRankingBuilder(false)}
         onComplete={handleRankingComplete}
-        onNotification={addNotification}
+        // onNotification={addNotification} // Replaced by NotificationCenter
       />
     )
   }
@@ -282,14 +261,18 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           setShowResults(false)
           setSelectedRanking(null)
         }}
-        onNotification={addNotification}
+        // onNotification={addNotification} // Replaced by NotificationCenter
       />
     )
   }
 
   if (showVideoCalls) {
     return (
-      <VideoCallManager rankings={rankings} onBack={handleShowRankings} onNotification={addNotification} user={user} />
+      <VideoCallManager
+        rankings={rankings}
+        onBack={handleShowRankings} /* onNotification={addNotification} */
+        user={user}
+      />
     )
   }
 
@@ -398,92 +381,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
 
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Notification Button */}
-              <div className="relative">
-                <button
-                  ref={setNotificationButtonRef}
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2 sm:p-3 glass-emerald hover-glow rounded-xl transition-all duration-300 group"
-                >
-                  <Bell className="h-5 w-5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-200" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full flex items-center justify-center animate-pulse-emerald font-semibold">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {showNotifications &&
-                  notificationButtonRef &&
-                  typeof document !== "undefined" &&
-                  createPortal(
-                    <div
-                      className="fixed w-80 sm:w-96 glass-emerald border border-emerald-200/20 dark:border-emerald-800/20 rounded-2xl shadow-2xl z-[99999] animate-scale-in"
-                      style={{
-                        top: `${notificationButtonRef.getBoundingClientRect().bottom + 8}px`,
-                        right: `${window.innerWidth - notificationButtonRef.getBoundingClientRect().right}px`,
-                      }}
-                    >
-                      <div className="p-4 sm:p-6 border-b border-emerald-200/20 dark:border-emerald-800/20">
-                        <h3 className="font-bold text-slate-900 dark:text-white font-work-sans">Notifications</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 font-open-sans">
-                          Stay updated with your hiring progress
-                        </p>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {notifications.length === 0 ? (
-                          <div className="p-6 text-center text-slate-500 dark:text-slate-400 font-open-sans">
-                            No notifications yet
-                          </div>
-                        ) : (
-                          notifications.map((notification, index) => (
-                            <div
-                              key={notification.id}
-                              onClick={() => markAsRead(notification.id)}
-                              className={`p-4 sm:p-6 border-b border-emerald-100/50 dark:border-emerald-800/20 cursor-pointer hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-300 animate-fade-in-up ${
-                                !notification.read ? "bg-emerald-50/30 dark:bg-emerald-900/10" : ""
-                              }`}
-                              style={{ animationDelay: `${index * 0.1}s` }}
-                            >
-                              <div className="flex items-start justify-between">
-                                <p
-                                  className={`text-sm ${!notification.read ? "font-semibold" : "font-medium"} text-slate-900 dark:text-slate-100 font-open-sans`}
-                                >
-                                  {notification.message}
-                                </p>
-                                {!notification.read && (
-                                  <div className="w-2 h-2 bg-emerald-500 rounded-full flex-shrink-0 mt-1 animate-pulse-emerald"></div>
-                                )}
-                              </div>
-                              <div
-                                className={`flex items-center mt-2 ${
-                                  notification.type === "success"
-                                    ? "text-emerald-600 dark:text-emerald-400"
-                                    : notification.type === "error"
-                                      ? "text-red-600 dark:text-red-400"
-                                      : "text-blue-600 dark:text-blue-400"
-                                }`}
-                              >
-                                <div
-                                  className={`w-1.5 h-1.5 rounded-full mr-2 ${
-                                    notification.type === "success"
-                                      ? "bg-emerald-600 dark:bg-emerald-400"
-                                      : notification.type === "error"
-                                        ? "bg-red-600 dark:bg-red-400"
-                                        : "bg-blue-600 dark:bg-blue-400"
-                                  }`}
-                                ></div>
-                                <span className="text-xs capitalize font-medium font-work-sans">
-                                  {notification.type}
-                                </span>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>,
-                    document.body,
-                  )}
-              </div>
+              <NotificationCenter user={user} />
 
               {/* Settings Button */}
               <button
@@ -535,13 +433,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           </div>
         </div>
       </header>
-
-      {showNotifications &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div className="fixed inset-0 z-[99998]" onClick={() => setShowNotifications(false)}></div>,
-          document.body,
-        )}
 
       {showMobileSidebar && (
         <div className="fixed inset-0 z-50 lg:hidden">

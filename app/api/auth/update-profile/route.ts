@@ -3,14 +3,14 @@ import { getUserByEmail, updateUser } from "@/lib/storage"
 
 export async function POST(request: NextRequest) {
   try {
-    const { firstname, lastname, companyName, email } = await request.json()
+    const { name, email, bio, company_name } = await request.json()
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    if (!firstname || !lastname || !companyName) {
-      return NextResponse.json({ error: "First name, last name, and company name are required" }, { status: 400 })
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 })
     }
 
     // Check if user exists
@@ -19,10 +19,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    // Split name into firstname and lastname for backward compatibility
+    const nameParts = name.trim().split(" ")
+    const firstname = nameParts[0] || ""
+    const lastname = nameParts.slice(1).join(" ") || ""
+
     await updateUser(email, {
       firstname,
       lastname,
-      company_name: companyName,
+      company_name: company_name || null,
     })
 
     return NextResponse.json({ message: "Profile updated successfully" })

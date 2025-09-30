@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { findUserByEmail, updateUser, verifyCode } from "@/lib/storage"
+import { createAuthToken } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,15 +49,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to update user" }, { status: 500 })
     }
 
-    console.log("[v0] Email verification successful for:", email)
-    return NextResponse.json({
+    const userPayload = {
+      id: updatedUser.id.toString(),
+      email: updatedUser.email,
+      verified: updatedUser.is_verified,
+    }
+
+    const token = await createAuthToken(userPayload)
+
+    const response = NextResponse.json({
       message: "Email verified successfully",
-      user: {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        verified: updatedUser.is_verified,
-      },
+      user: userPayload,
     })
+
+    // Set the auth cookie
+    response.cookies.set("auth-token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    })
+
+    console.log("[v0] Email verification successful for:", email)
+    return response
   } catch (error) {
     console.error("[v0] Verification error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -7,7 +7,18 @@ if (typeof window === "undefined") {
   config()
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let resendClient: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      throw new Error("RESEND_API_KEY environment variable is required")
+    }
+    resendClient = new Resend(apiKey)
+  }
+  return resendClient
+}
 
 let transporter: nodemailer.Transporter | null = null
 
@@ -47,6 +58,7 @@ export async function sendEmail(options: EmailOptions) {
     console.log("[v0] 📧 To:", to)
     console.log("[v0] 📝 Subject:", subject)
 
+    const resend = getResendClient()
     const { data, error } = await resend.emails.send({
       from: "HireRankerAI <noreply@resend.dev>",
       to: [to],
@@ -82,6 +94,7 @@ export async function testEmailConnection() {
   try {
     console.log("[v0] 🔍 Testing Resend API connection...")
 
+    const resend = getResendClient()
     const { data, error } = await resend.emails.send({
       from: "HireRankerAI <noreply@resend.dev>",
       to: ["delivered@resend.dev"], // Use Resend's test email for connection testing
