@@ -7,7 +7,19 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Eye, EyeOff, User, Shield, Palette, AlertTriangle, Mail, Lock, Trash2 } from "lucide-react"
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  User,
+  Shield,
+  Palette,
+  AlertTriangle,
+  Mail,
+  Lock,
+  Trash2,
+  Building,
+} from "lucide-react"
 
 // Define the SettingsProps interface
 interface SettingsProps {
@@ -17,13 +29,21 @@ interface SettingsProps {
 }
 
 interface UserProfile {
-  name: string
+  firstname: string
+  lastname: string
   email: string
   bio: string
+  company_name: string
 }
 
 export default function Settings({ onBack, userEmail, onNotification }: SettingsProps) {
-  const [profile, setProfile] = useState<UserProfile>({ name: "", email: userEmail, bio: "" })
+  const [profile, setProfile] = useState<UserProfile>({
+    firstname: "",
+    lastname: "",
+    email: userEmail,
+    bio: "",
+    company_name: "",
+  })
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -43,17 +63,48 @@ export default function Settings({ onBack, userEmail, onNotification }: Settings
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const response = await fetch("/api/auth/profile")
+        console.log("[v0] Loading profile for user:", userEmail)
+
+        const response = await fetch(`/api/auth/profile`, {
+          method: "GET",
+          credentials: "include", // Include cookies for JWT auth
+        })
+
         if (response.ok) {
           const data = await response.json()
-          setProfile(data)
+          console.log("[v0] Profile data received:", data)
+          setProfile({
+            firstname: data.user?.firstname || data.firstname || "",
+            lastname: data.user?.lastname || data.lastname || "",
+            email: data.user?.email || data.email || userEmail,
+            bio: data.user?.bio || data.bio || "",
+            company_name: data.user?.company_name || data.company_name || "",
+          })
+        } else {
+          console.error("[v0] Failed to load profile:", response.status, response.statusText)
+          // Set default values if profile doesn't exist
+          setProfile({
+            firstname: "",
+            lastname: "",
+            email: userEmail,
+            bio: "",
+            company_name: "",
+          })
         }
       } catch (error) {
-        console.error("Failed to load profile:", error)
+        console.error("[v0] Failed to load profile:", error)
+        // Set default values on error
+        setProfile({
+          firstname: "",
+          lastname: "",
+          email: userEmail,
+          bio: "",
+          company_name: "",
+        })
       }
     }
     loadProfile()
-  }, [])
+  }, [userEmail])
 
   const updateProfile = async () => {
     setLoading(true)
@@ -61,19 +112,29 @@ export default function Settings({ onBack, userEmail, onNotification }: Settings
     setMessage("")
 
     try {
+      console.log("[v0] Updating profile:", profile)
+
       const response = await fetch("/api/auth/update-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
+        credentials: "include", // Include cookies for JWT auth
+        body: JSON.stringify({
+          ...profile,
+          full_name: `${profile.firstname} ${profile.lastname}`.trim(),
+        }),
       })
 
       if (response.ok) {
+        const data = await response.json()
+        console.log("[v0] Profile updated successfully:", data)
         setMessage("Profile updated successfully!")
       } else {
         const data = await response.json()
+        console.error("[v0] Profile update failed:", data)
         setError(data.error || "Failed to update profile")
       }
     } catch (error) {
+      console.error("[v0] Profile update error:", error)
       setError("An error occurred while updating profile")
     } finally {
       setLoading(false)
@@ -98,6 +159,7 @@ export default function Settings({ onBack, userEmail, onNotification }: Settings
       const response = await fetch("/api/auth/send-password-change-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include cookies for JWT auth
         body: JSON.stringify({
           email: userEmail,
           currentPassword,
@@ -132,6 +194,7 @@ export default function Settings({ onBack, userEmail, onNotification }: Settings
       const response = await fetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include cookies for JWT auth
         body: JSON.stringify({
           email: userEmail,
           verificationCode,
@@ -170,6 +233,7 @@ export default function Settings({ onBack, userEmail, onNotification }: Settings
       const response = await fetch("/api/auth/send-delete-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include cookies for JWT auth
         body: JSON.stringify({
           email: userEmail,
           password: deletePassword,
@@ -203,6 +267,7 @@ export default function Settings({ onBack, userEmail, onNotification }: Settings
       const response = await fetch("/api/auth/delete-account", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include cookies for JWT auth
         body: JSON.stringify({
           email: userEmail,
           verificationCode,
@@ -306,29 +371,58 @@ export default function Settings({ onBack, userEmail, onNotification }: Settings
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-slate-300">
-                    Full Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value={profile.name}
-                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                    className="bg-slate-700/50 border-slate-600 text-white focus:border-emerald-500 transition-all duration-300"
-                    placeholder="Enter your full name"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstname" className="text-slate-300">
+                      First Name
+                    </Label>
+                    <Input
+                      id="firstname"
+                      value={profile.firstname}
+                      onChange={(e) => setProfile({ ...profile, firstname: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white focus:border-emerald-500 transition-all duration-300"
+                      placeholder="Enter your first name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastname" className="text-slate-300">
+                      Last Name
+                    </Label>
+                    <Input
+                      id="lastname"
+                      value={profile.lastname}
+                      onChange={(e) => setProfile({ ...profile, lastname: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white focus:border-emerald-500 transition-all duration-300"
+                      placeholder="Enter your last name"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-300">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    value={profile.email}
-                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    className="bg-slate-700/50 border-slate-600 text-white focus:border-emerald-500 transition-all duration-300"
-                    placeholder="Enter your email"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company_name" className="text-slate-300 flex items-center gap-2">
+                      <Building className="w-4 h-4" />
+                      Company Name
+                    </Label>
+                    <Input
+                      id="company_name"
+                      value={profile.company_name}
+                      onChange={(e) => setProfile({ ...profile, company_name: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white focus:border-emerald-500 transition-all duration-300"
+                      placeholder="Enter your company name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-slate-300">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      value={profile.email}
+                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      className="bg-slate-700/50 border-slate-600 text-white focus:border-emerald-500 transition-all duration-300"
+                      placeholder="Enter your email"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="bio" className="text-slate-300">

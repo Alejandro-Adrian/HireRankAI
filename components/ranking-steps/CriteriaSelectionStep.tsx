@@ -6,7 +6,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, ArrowRight, User, Award, MapPin, Briefcase, GraduationCap, FileText, Star } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  User,
+  Award,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  FileText,
+  Star,
+  Plus,
+  CheckSquare,
+  Square,
+} from "lucide-react"
 import type { RankingData } from "@/app/rankings/create/page"
 
 interface CriteriaSelectionStepProps {
@@ -60,6 +73,13 @@ const availableCriteria = [
     description: "Educational background and qualifications",
     icon: GraduationCap,
   },
+  {
+    id: "other",
+    title: "Other",
+    description: "Custom criteria with keyword matching (adds 50 points if keyword found in resume)",
+    icon: Plus,
+    hasInput: true,
+  },
 ]
 
 export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: CriteriaSelectionStepProps) {
@@ -74,6 +94,19 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
     onUpdate({ selectedCriteria: newSelectedCriteria })
   }
 
+  const handleSelectAll = () => {
+    const allCriteriaIds = availableCriteria.map((c) => c.id)
+    const isAllSelected = allCriteriaIds.every((id) => data.selectedCriteria.includes(id))
+
+    if (isAllSelected) {
+      // Deselect all
+      onUpdate({ selectedCriteria: [] })
+    } else {
+      // Select all
+      onUpdate({ selectedCriteria: allCriteriaIds })
+    }
+  }
+
   const handleNext = () => {
     const newErrors: Record<string, string> = {}
 
@@ -85,27 +118,65 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
       newErrors.areaLivingCity = "Please specify the preferred city for area living criteria"
     }
 
+    if (data.selectedCriteria.includes("other") && !data.otherKeyword?.trim()) {
+      newErrors.otherKeyword = "Please specify the keyword for the other criteria"
+    }
+
     setErrors(newErrors)
 
     if (Object.keys(newErrors).length === 0) {
-      // Initialize weights for selected criteria
       const initialWeights: Record<string, number> = {}
       data.selectedCriteria.forEach((criteriaId) => {
+        // Ensure we don't have undefined weights that could cause React errors
         initialWeights[criteriaId] = data.criteriaWeights[criteriaId] || 50
       })
-      onUpdate({ criteriaWeights: initialWeights })
+
+      // Clear any weights for unselected criteria to prevent stale data
+      const cleanedWeights = { ...data.criteriaWeights }
+      Object.keys(cleanedWeights).forEach((key) => {
+        if (!data.selectedCriteria.includes(key)) {
+          delete cleanedWeights[key]
+        }
+      })
+
+      onUpdate({ criteriaWeights: { ...cleanedWeights, ...initialWeights } })
       onNext()
     }
   }
+
+  const allCriteriaIds = availableCriteria.map((c) => c.id)
+  const isAllSelected = allCriteriaIds.every((id) => data.selectedCriteria.includes(id))
 
   return (
     <div className="space-y-6">
       {/* Criteria Selection */}
       <div className="animate-fade-in-up">
-        <Label className="text-base font-medium text-gray-700 dark:text-gray-200">Select Evaluation Criteria</Label>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          Choose the criteria you want to use for evaluating applicants
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <Label className="text-base font-medium text-gray-700 dark:text-gray-200">Select Evaluation Criteria</Label>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              Choose the criteria you want to use for evaluating applicants
+            </p>
+          </div>
+
+          <Button
+            variant="outline"
+            onClick={handleSelectAll}
+            className="flex items-center gap-2 backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 border-emerald-200/50 dark:border-emerald-700/50 hover:bg-emerald-50/80 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-lg px-4 py-2"
+          >
+            {isAllSelected ? (
+              <>
+                <Square className="w-4 h-4" />
+                Deselect All
+              </>
+            ) : (
+              <>
+                <CheckSquare className="w-4 h-4" />
+                Select All
+              </>
+            )}
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           {availableCriteria.map((criteria, index) => {
@@ -150,7 +221,7 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{criteria.description}</p>
 
                       {/* Special input for Area Living */}
-                      {criteria.hasInput && isSelected && (
+                      {criteria.id === "area_living" && criteria.hasInput && isSelected && (
                         <div className="mt-3 animate-slide-in-down">
                           <Label
                             htmlFor="areaLivingCity"
@@ -168,6 +239,28 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
                           />
                         </div>
                       )}
+
+                      {criteria.id === "other" && criteria.hasInput && isSelected && (
+                        <div className="mt-3 animate-slide-in-down">
+                          <Label
+                            htmlFor="otherKeyword"
+                            className="text-sm text-gray-700 dark:text-gray-300 font-medium"
+                          >
+                            Keyword to Match
+                          </Label>
+                          <Input
+                            id="otherKeyword"
+                            value={data.otherKeyword || ""}
+                            onChange={(e) => onUpdate({ otherKeyword: e.target.value })}
+                            placeholder="Enter keyword to search in resumes"
+                            className="mt-1 backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 border-emerald-200/50 dark:border-emerald-600/50 text-gray-900 dark:text-gray-100 transition-all duration-300 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 hover:border-emerald-400 rounded-lg shadow-sm"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            If this keyword is found in an applicant's resume, they will receive 50 bonus points
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -181,6 +274,9 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
         )}
         {errors.areaLivingCity && (
           <p className="text-sm text-red-600 dark:text-red-400 mt-2 animate-shake">{errors.areaLivingCity}</p>
+        )}
+        {errors.otherKeyword && (
+          <p className="text-sm text-red-600 dark:text-red-400 mt-2 animate-shake">{errors.otherKeyword}</p>
         )}
       </div>
 
@@ -200,6 +296,9 @@ export function CriteriaSelectionStep({ data, onUpdate, onNext, onPrev }: Criter
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {criteria?.title}
+                  {criteriaId === "other" && data.otherKeyword && (
+                    <span className="ml-1 text-xs opacity-75">({data.otherKeyword})</span>
+                  )}
                 </span>
               )
             })}

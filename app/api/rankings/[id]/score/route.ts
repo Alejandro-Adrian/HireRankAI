@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   try {
     const supabase = createClient()
 
-    // Get ranking
+    // Get ranking with all necessary data
     const { data: ranking, error: rankingError } = await supabase
       .from("rankings")
       .select("*")
@@ -39,20 +39,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     let scoredCount = 0
     const scoringErrors: string[] = []
 
-    console.log(`[v0] Starting to score ${applications.length} applications`)
+    console.log(`[v0] Starting to score ${applications.length} applications with criteria:`, ranking.criteria)
+    console.log(`[v0] Using weights:`, criteriaWeights)
+    console.log(`[v0] Other keyword:`, ranking.other_keyword)
 
     // Score each application
     for (const application of applications) {
       try {
         console.log(`[v0] Scoring application for ${application.applicant_name}`)
 
-        if (!application.resume_summary || !application.key_skills) {
+        if (!application.resume_summary && !application.key_skills && !application.ocr_transcript) {
           console.log(`[v0] Skipping ${application.applicant_name} - no resume data available`)
           scoringErrors.push(`Skipped ${application.applicant_name}: No resume data available`)
           continue
         }
 
-        const scoringResult = realScoring.scoreApplication(application, criteriaWeights)
+        const scoringResult = realScoring.scoreApplication(application, criteriaWeights, ranking)
 
         const { error: updateError } = await supabase
           .from("applications")
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             total_score: scoringResult.totalScore,
             status: "scored",
             scored_at: new Date().toISOString(),
+            scoring_summary: `Scored using ${Object.keys(criteriaWeights).length} criteria${ranking.other_keyword ? ` (including keyword: "${ranking.other_keyword}")` : ""}`,
           })
           .eq("id", application.id)
 
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           scoringErrors.push(`Failed to update ${application.applicant_name}: ${updateError.message}`)
         } else {
           scoredCount++
-          console.log(`[v0] Successfully scored ${application.applicant_name}: ${scoringResult.totalScore}`)
+          console.log(`[v0] Successfully scored ${application.applicant_name}: ${scoringResult.totalScore}%`)
         }
       } catch (error) {
         console.error(`[v0] Error scoring application ${application.id}:`, error)
@@ -117,6 +120,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       scoredCount: scoredCount,
       totalApplications: applications.length,
       errors: scoringErrors.length > 0 ? scoringErrors : undefined,
+      rankingInfo: {
+        criteria: ranking.criteria,
+        weights: criteriaWeights,
+        otherKeyword: ranking.other_keyword,
+      },
     })
   } catch (error) {
     console.error("[v0] Error in scoring API:", error)

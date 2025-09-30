@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email service unavailable. Please try again later." }, { status: 503 })
     }
 
-    const { email, password, firstname, lastname } = await request.json()
-    console.log("[v0] 📝 Request data:", { email, firstname, lastname, passwordLength: password?.length })
+    const { email, password, firstname, lastname, company_name } = await request.json()
+    console.log("[v0] 📝 Request data:", { email, firstname, lastname, company_name, passwordLength: password?.length })
 
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       return NextResponse.json({ error: "Email and password are required and must be strings" }, { status: 400 })
@@ -78,9 +78,10 @@ export async function POST(request: NextRequest) {
     const sanitizedEmail = email.trim().toLowerCase()
     const sanitizedFirstname = firstname.trim()
     const sanitizedLastname = lastname.trim()
+    const sanitizedCompanyName = company_name?.trim() || null
 
     console.log("[v0] 👤 Creating user with email:", sanitizedEmail)
-    const user = await createUser(sanitizedEmail, password, sanitizedFirstname, sanitizedLastname)
+    const user = await createUser(sanitizedEmail, password, sanitizedFirstname, sanitizedLastname, sanitizedCompanyName)
     if (!user) {
       console.error("[v0] ❌ Failed to create user in database")
       return NextResponse.json({ error: "Failed to create user" }, { status: 500 })

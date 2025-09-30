@@ -37,16 +37,20 @@ export default function LoginForm({
 
       const data = await response.json()
 
-      if (response.ok) {
-        onLogin(data.user)
-      } else {
+      if (!response.ok) {
         if (data.requiresVerification && onSwitchToVerification) {
           onSwitchToVerification(data.email)
-        } else {
-          setError(data.error || "Login failed")
+          return
         }
+        setError(data.error || "Login failed")
+        return
+      }
+
+      if (data.user) {
+        onLogin(data.user)
       }
     } catch (err) {
+      console.error("Login error:", err)
       setError("Network error occurred")
     } finally {
       setLoading(false)
@@ -169,7 +173,7 @@ export default function LoginForm({
         {error && (
           <div className="animate-bounce-gentle">
             <div className="flex items-center space-x-3 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-200 dark:border-red-800 shadow-sm">
-              <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full flex items-center justify-center flex-shrink-0">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"

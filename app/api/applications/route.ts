@@ -43,6 +43,17 @@ export async function POST(request: NextRequest) {
     console.log("Processing application submission")
 
     const ranking_id = formData.get("ranking_id") as string
+    const hr_name = formData.get("hr_name") as string
+    const company_name = formData.get("company_name") as string
+    const manual_info_str = formData.get("manual_info") as string
+    let manual_info = null
+    if (manual_info_str) {
+      try {
+        manual_info = JSON.parse(manual_info_str)
+      } catch (e) {
+        console.error("Failed to parse manual info:", e)
+      }
+    }
 
     if (!ranking_id) {
       console.error("Missing ranking ID")
@@ -50,6 +61,11 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Ranking ID:", ranking_id)
+    console.log("HR Name:", hr_name)
+    console.log("Company Name:", company_name)
+    if (manual_info) {
+      console.log("Manual info provided:", manual_info)
+    }
 
     // Process uploaded files
     const fileEntries = Array.from(formData.entries()).filter(
@@ -72,65 +88,81 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!resumeFile) {
-      console.error("No resume file found")
-      return NextResponse.json({ error: "Resume file is required" }, { status: 400 })
+    if (!resumeFile && !manual_info) {
+      console.error("No resume file found and no manual input provided")
+      return NextResponse.json({ error: "Resume file or manual input is required" }, { status: 400 })
     }
 
-    console.log(`Found ${allFiles.length} files, including resume: ${resumeFile.name}`)
+    console.log(`Found ${allFiles.length} files${resumeFile ? `, including resume: ${resumeFile.name}` : ""}`)
 
     let resumeData
-    try {
-      console.log("Starting resume parsing...")
-      console.log("Resume file details:", {
-        name: resumeFile.name,
-        size: resumeFile.size,
-        type: resumeFile.type,
-      })
+    if (resumeFile) {
+      try {
+        console.log("Starting resume parsing...")
+        console.log("Resume file details:", {
+          name: resumeFile.name,
+          size: resumeFile.size,
+          type: resumeFile.type,
+        })
 
-      resumeData = await simpleResumeParser.parseFromFile(resumeFile)
+        resumeData = await simpleResumeParser.parseFromFile(resumeFile)
 
-      console.log("Resume parsing completed successfully")
-      console.log("Parsed resume data:", resumeData)
+        console.log("Resume parsing completed successfully")
+        console.log("Parsed resume data:", resumeData)
 
-      if (!resumeData.applicant_name || resumeData.applicant_name === "Name Not Found") {
-        console.error("Resume parsing incomplete - no name found")
+        if (!resumeData.applicant_name || resumeData.applicant_name === "Name Not Found") {
+          console.error("Resume parsing incomplete - no name found")
+          return NextResponse.json(
+            {
+              error: "Failed to extract information from resume",
+              details:
+                "Could not extract applicant name from resume. Please ensure the file contains readable text or is a clear image.",
+            },
+            { status: 400 },
+          )
+        }
+      } catch (parseError) {
+        console.error("Resume parsing failed:", parseError)
+
+        if (parseError.message.includes("PDF processing failed") && allFiles.length > 1) {
+          return NextResponse.json(
+            {
+              error: "PDF processing failed when mixed with other files",
+              details: "Please submit PDF files separately from images, or use only image files (JPG, PNG).",
+            },
+            { status: 400 },
+          )
+        }
+
         return NextResponse.json(
           {
-            error: "Failed to extract information from resume",
-            details:
-              "Could not extract applicant name from resume. Please ensure the file contains readable text or is a clear image.",
+            error: "Failed to parse resume",
+            details: parseError.message,
           },
-          { status: 400 },
+          { status: 500 },
         )
       }
-    } catch (parseError) {
-      console.error("Resume parsing failed:", parseError)
-
-      if (parseError.message.includes("PDF processing failed") && allFiles.length > 1) {
-        return NextResponse.json(
-          {
-            error: "PDF processing failed when mixed with other files",
-            details: "Please submit PDF files separately from images, or use only image files (JPG, PNG).",
-          },
-          { status: 400 },
-        )
+    } else if (manual_info) {
+      resumeData = {
+        applicant_name: `${manual_info.firstname} ${manual_info.lastname}`.trim(),
+        applicant_email: manual_info.email,
+        applicant_phone: manual_info.phone || null,
+        applicant_city: manual_info.city || null,
+        resume_summary: manual_info.experience || null,
+        key_skills: manual_info.skills || null,
+        experience_years: null,
+        education_level: manual_info.education || null,
+        certifications: null,
+        raw_text: `Manual input: ${JSON.stringify(manual_info)}`,
       }
-
-      return NextResponse.json(
-        {
-          error: "Failed to parse resume",
-          details: parseError.message,
-        },
-        { status: 500 },
-      )
+      console.log("Using manual input data:", resumeData)
     }
 
     // Verify ranking exists and is active
     console.log("Validating ranking...")
     const { data: ranking, error: rankingError } = await supabase
       .from("rankings")
-      .select("id, is_active, title")
+      .select("id, is_active, title, created_by")
       .eq("id", ranking_id)
       .eq("is_active", true)
       .single()
@@ -331,6 +363,32 @@ export async function POST(request: NextRequest) {
 
       if (scoringResult) {
         console.log("Application scored successfully")
+
+        try {
+          const { data: ranking } = await supabase
+            .from("rankings")
+            .select("title, created_by")
+            .eq("id", ranking_id)
+            .single()
+
+          if (ranking?.created_by) {
+            await supabase.from("notifications").insert({
+              user_id: ranking.created_by,
+              type: "application_submitted",
+              title: "New Application Received",
+              message: `${resumeData.applicant_name} has submitted an application for ${ranking.title}`,
+              data: {
+                application_id: application.id,
+                ranking_id: ranking_id,
+                applicant_name: resumeData.applicant_name,
+              },
+            })
+            console.log("Notification created for new application")
+          }
+        } catch (notificationError) {
+          console.error("Failed to create notification:", notificationError)
+          // Don't fail the entire application if notification fails
+        }
       } else {
         console.error("Direct scoring failed: No result returned")
         // Don't fail the entire application if scoring fails
@@ -340,15 +398,24 @@ export async function POST(request: NextRequest) {
       // Continue without failing - scoring can be done manually later
     }
 
+    const nameParts = resumeData.applicant_name.split(" ")
+    const firstname = nameParts[0] || ""
+    const lastname = nameParts.slice(1).join(" ") || ""
+
     return NextResponse.json(
       {
         message: "Application submitted successfully",
         application_id: application.id,
         extracted_info: {
-          name: resumeData.applicant_name,
+          firstname: firstname,
+          lastname: lastname,
           email: resumeData.applicant_email || "Email not detected",
           phone: resumeData.applicant_phone || "Phone not detected",
           city: resumeData.applicant_city || "Location not detected",
+        },
+        company_info: {
+          hr_name: hr_name,
+          company_name: company_name,
         },
         uploaded_files: uploadedFiles.length,
       },

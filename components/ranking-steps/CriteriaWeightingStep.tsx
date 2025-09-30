@@ -3,7 +3,18 @@
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, ArrowRight, User, Award, MapPin, Briefcase, GraduationCap, FileText, Star } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  User,
+  Award,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  FileText,
+  Star,
+  Plus,
+} from "lucide-react"
 import type { RankingData } from "@/app/rankings/create/page"
 
 interface CriteriaWeightingStepProps {
@@ -21,6 +32,7 @@ const criteriaIcons: Record<string, any> = {
   training: Award,
   certification: FileText,
   education: GraduationCap,
+  other: Plus,
 }
 
 const criteriaLabels: Record<string, string> = {
@@ -31,6 +43,7 @@ const criteriaLabels: Record<string, string> = {
   training: "Training",
   certification: "Certification",
   education: "Education",
+  other: "Other",
 }
 
 export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: CriteriaWeightingStepProps) {
@@ -123,6 +136,9 @@ export function CriteriaWeightingStep({ data, onUpdate, onNext, onPrev }: Criter
                     <h3 className="font-medium text-gray-900 dark:text-gray-100">{criteriaLabels[criteriaId]}</h3>
                     {criteriaId === "area_living" && data.areaLivingCity && (
                       <p className="text-sm text-gray-500 dark:text-gray-400">Preferred city: {data.areaLivingCity}</p>
+                    )}
+                    {criteriaId === "other" && data.otherKeyword && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Keyword: {data.otherKeyword}</p>
                     )}
                   </div>
                   <div className="text-right">

@@ -13,9 +13,10 @@ import type { RankingData } from "@/app/rankings/create/page"
 interface ReviewStepProps {
   data: RankingData
   onPrev: () => void
+  onRankingCreated?: () => void
 }
 
-export function ReviewStep({ data, onPrev }: ReviewStepProps) {
+export function ReviewStep({ data, onPrev, onRankingCreated }: ReviewStepProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [applicationLink, setApplicationLink] = useState("")
   const [isCreated, setIsCreated] = useState(false)
@@ -35,46 +36,54 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
     setError("")
 
     try {
-      console.log("Sending ranking data:", {
+      console.log("[v0] Sending ranking data:", {
         title: data.title,
         position: data.position,
         description: data.description,
         criteria: data.selectedCriteria,
         criteriaWeights: data.criteriaWeights,
         areaLivingCity: data.areaLivingCity,
+        otherKeyword: data.otherKeyword,
         showCriteriaToApplicants,
       })
+
+      const requestBody = {
+        title: data.title,
+        position: data.position,
+        description: data.description,
+        criteriaWeights: data.criteriaWeights, // Use camelCase for frontend consistency
+        selectedCriteria: data.selectedCriteria, // Use camelCase for frontend consistency
+        areaLivingCity: data.areaLivingCity, // Use camelCase for frontend consistency
+        otherKeyword: data.otherKeyword, // Use camelCase for frontend consistency
+        show_criteria_to_applicants: showCriteriaToApplicants,
+        is_active: true,
+      }
+
+      console.log("[v0] Sending corrected request body:", requestBody)
 
       const response = await fetch("/api/rankings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title: data.title,
-          position: data.position,
-          description: data.description,
-          criteria: data.selectedCriteria,
-          criteriaWeights: data.criteriaWeights,
-          areaLivingCity: data.areaLivingCity,
-          showCriteriaToApplicants,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const result = await response.json()
-      console.log("API Response:", result)
+      console.log("[v0] API Response:", result)
 
       if (response.ok) {
         const link = `${window.location.origin}/apply/${result.linkId}`
         setApplicationLink(link)
         setIsCreated(true)
+        onRankingCreated?.()
       } else {
         const errorMessage = result.details || result.error || "Failed to create ranking"
-        console.error("API Error:", result)
+        console.error("[v0] API Error:", result)
         setError(`Error: ${errorMessage}`)
       }
     } catch (error) {
-      console.error("Network error creating ranking:", error)
+      console.error("[v0] Network error creating ranking:", error)
       setError(`Network error: ${error instanceof Error ? error.message : "Unknown error"}`)
     } finally {
       setIsCreating(false)
@@ -94,6 +103,7 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
     training: "Training",
     certification: "Certification",
     education: "Education",
+    other: "Other",
   }
 
   if (isCreated) {
@@ -212,6 +222,9 @@ export function ReviewStep({ data, onPrev }: ReviewStepProps) {
                   <span className="font-medium text-gray-900 dark:text-gray-100">{criteriaLabels[criteriaId]}</span>
                   {criteriaId === "area_living" && data.areaLivingCity && (
                     <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({data.areaLivingCity})</span>
+                  )}
+                  {criteriaId === "other" && data.otherKeyword && (
+                    <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({data.otherKeyword})</span>
                   )}
                 </div>
                 <Badge
