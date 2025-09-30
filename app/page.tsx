@@ -13,7 +13,7 @@ export default function Home() {
   useEffect(() => {
     // Check if user is logged in
     const userData = localStorage.getItem("user")
-    if (userData) {
+    if (userData) { abs
       setUser(JSON.parse(userData))
       setCurrentView("dashboard")
     }
