@@ -35,17 +35,37 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("Starting ranking creation...")
+    console.log("[v0] Starting ranking creation...")
     const supabase = await createClient()
 
     const body = await request.json()
     console.log("Request body:", body)
 
-    const { title, position, description, criteria, criteriaWeights, areaLivingCity, showCriteriaToApplicants } = body
+    const {
+      title,
+      position,
+      description,
+      criteria_weights,
+      specific_criteria,
+      custom_criteria,
+      area_city,
+      other_keyword,
+      show_criteria_to_applicants,
+      is_active,
+      selectedCriteria,
+      criteriaWeights,
+      areaLivingCity,
+      otherKeyword,
+    } = body
+
+    const mappedCriteriaWeights = criteria_weights || criteriaWeights
+    const mappedSelectedCriteria = specific_criteria || selectedCriteria
+    const mappedAreaCity = area_city || areaLivingCity
+    const mappedOtherKeyword = other_keyword || otherKeyword
 
     // Validate required fields
-    if (!title || !position || !criteriaWeights) {
-      console.log("Validation failed - missing fields:", { title, position, criteriaWeights })
+    if (!title || !position || !mappedCriteriaWeights) {
+      console.log("Validation failed - missing fields:", { title, position, criteriaWeights: mappedCriteriaWeights })
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
@@ -63,19 +83,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid position" }, { status: 400 })
     }
 
+    const totalWeight = Object.values(mappedCriteriaWeights).reduce(
+      (sum: number, weight: any) => sum + Number(weight),
+      0,
+    )
+    if (Math.abs(totalWeight - 100) > 0.01) {
+      // Allow for small floating point differences
+      console.log("Invalid criteria weights - total:", totalWeight)
+      return NextResponse.json({ error: "Criteria weights must sum to exactly 100%" }, { status: 400 })
+    }
+
     const linkId = `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     console.log("Generated linkId:", linkId)
+
+    let currentUserId = null
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      currentUserId = user?.id || null
+      console.log("[v0] Current user ID:", currentUserId)
+    } catch (authError) {
+      console.log("[v0] No authenticated user, proceeding with null created_by")
+    }
 
     const insertData = {
       title,
       position,
       description,
-      criteria_weights: criteriaWeights,
-      area_city: areaLivingCity,
-      is_active: true,
+      criteria_weights: mappedCriteriaWeights,
+      criteria: mappedSelectedCriteria || [], // Store selected criteria in the criteria field
+      area_city: mappedAreaCity,
+      other_keyword: mappedOtherKeyword,
+      is_active: is_active !== false, // Default to true if not specified
       application_link_id: linkId,
-      created_by: null,
-      show_criteria_to_applicants: showCriteriaToApplicants !== false, // Default to true if not specified
+      created_by: currentUserId, // Use actual user ID if available, null otherwise
+      show_criteria_to_applicants: show_criteria_to_applicants !== false, // Default to true if not specified
     }
 
     console.log("Inserting data:", insertData)

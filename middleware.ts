@@ -6,7 +6,6 @@ function isBuildTime() {
 }
 
 export async function middleware(request: NextRequest) {
-  // Skip middleware during build time
   if (isBuildTime()) {
     return NextResponse.next({ request })
   }
@@ -14,7 +13,6 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Skip middleware if Supabase is not configured
   if (!supabaseUrl || !supabaseAnonKey) {
     console.warn("Supabase not configured, skipping auth middleware")
     return NextResponse.next({ request })

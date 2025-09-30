@@ -6,30 +6,68 @@ import SignupForm from "@/components/SignupForm"
 import ForgotPasswordForm from "@/components/ForgotPasswordForm"
 import Dashboard from "@/components/Dashboard"
 
-{/*Comment*/}
 export default function Home() {
   const [currentView, setCurrentView] = useState<"login" | "signup" | "forgot" | "dashboard">("login")
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
-      setCurrentView("dashboard")
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include", // Include cookies
+        })
+
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData.user)
+          setCurrentView("dashboard")
+        } else {
+          // User is not authenticated
+          setUser(null)
+          setCurrentView("login")
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error)
+        setUser(null)
+        setCurrentView("login")
+      } finally {
+        setLoading(false)
+      }
     }
+
+    checkAuth()
   }, [])
 
   const handleLogin = (userData: any) => {
     setUser(userData)
-    localStorage.setItem("user", JSON.stringify(userData))
     setCurrentView("dashboard")
   }
 
-  const handleLogout = () => {
-    setUser(null)
-    localStorage.removeItem("user")
-    setCurrentView("login")
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+    } catch (error) {
+      console.error("Logout failed:", error)
+    } finally {
+      setUser(null)
+      setCurrentView("login")
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-950 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+          <span className="text-emerald-600 dark:text-emerald-400 font-medium">Loading...</span>
+        </div>
+      </div>
+    )
   }
 
   if (currentView === "dashboard") {

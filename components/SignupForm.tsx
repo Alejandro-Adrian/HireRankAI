@@ -13,9 +13,9 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [firstname, setFirstname] = useState("")
   const [lastname, setLastname] = useState("")
+  const [companyName, setCompanyName] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [verificationCode, setVerificationCode] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [step, setStep] = useState<"signup" | "verify">("signup")
@@ -23,6 +23,7 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signup")
   const [resendLoading, setResendLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [verificationCode, setVerificationCode] = useState("")
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,23 +40,33 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, firstname, lastname }),
+        body: JSON.stringify({
+          email,
+          password,
+          firstname,
+          lastname,
+          company_name: companyName,
+        }),
       })
 
       const data = await response.json()
 
-      if (response.ok) {
+      if (!response.ok) {
+        setError(data.error || "Signup failed")
+        return
+      }
+
+      if (data.requiresVerification) {
         setStep("verify")
-        setMessage("Verification code sent to your email!")
+        setMessage("Please check your email and enter the verification code sent to you!")
       } else {
-        if (data.requiresVerification) {
-          setStep("verify")
-          setMessage(data.message || "Verification code sent to your email!")
-        } else {
-          setError(data.error || "Signup failed")
-        }
+        setMessage("Account created successfully! Redirecting to dashboard...")
+        setTimeout(() => {
+          window.location.reload()
+        }, 1500)
       }
     } catch (err) {
+      console.error("Signup error:", err)
       setError("Network error occurred")
     } finally {
       setLoading(false)
@@ -77,8 +88,32 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       const data = await response.json()
 
       if (response.ok) {
-        setMessage("Account verified successfully! You can now sign in.")
-        setTimeout(() => onSwitchToLogin(), 2000)
+        setMessage("Account verified successfully! Signing you in...")
+
+        try {
+          const loginResponse = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          })
+
+          const loginData = await loginResponse.json()
+
+          if (loginResponse.ok) {
+            setMessage("Welcome! Redirecting to dashboard...")
+            setTimeout(() => {
+              window.location.reload() // This will trigger the auth check in the main app
+            }, 1500)
+          } else {
+            // If auto-login fails, just redirect to login
+            setMessage("Account verified successfully! You can now sign in.")
+            setTimeout(() => onSwitchToLogin(), 2000)
+          }
+        } catch (loginError) {
+          // If auto-login fails, just redirect to login
+          setMessage("Account verified successfully! You can now sign in.")
+          setTimeout(() => onSwitchToLogin(), 2000)
+        }
       } else {
         setError(data.error || "Verification failed")
       }
@@ -143,12 +178,12 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           </div>
         </div>
         <h2 className="text-3xl font-bold gradient-text mb-3 font-work-sans">
-          {step === "signup" ? "Join HireRankerAI" : "Verify Your Email"}
+          {step === "signup" ? "Join HireRankerAI" : "Check Your Email"}
         </h2>
         <p className="text-slate-700 dark:text-slate-300 font-open-sans">
           {step === "signup"
             ? "Create your account and transform hiring"
-            : "Enter the verification code sent to your email"}
+            : "Click the confirmation link in your email to verify your account"}
         </p>
       </div>
 
@@ -207,6 +242,20 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
                 Last Name
               </label>
             </div>
+          </div>
+
+          <div className="relative group animate-fade-in-up hover-lift" style={{ animationDelay: "0.17s" }}>
+            <input
+              type="text"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder=" "
+              className="w-full px-4 py-4 bg-white/60 dark:bg-slate-800/60 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-500 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-lg hover:scale-[1.02] peer font-open-sans backdrop-blur-sm"
+              required
+            />
+            <label className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-700 dark:peer-placeholder-shown:text-slate-300 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans">
+              Company Name
+            </label>
           </div>
 
           <div className="relative group animate-fade-in-up hover-lift" style={{ animationDelay: "0.2s" }}>
@@ -383,38 +432,38 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           </button>
         </form>
       ) : (
-        <form onSubmit={handleVerify} className="space-y-6 animate-slide-in-right">
-          <div className="relative group animate-fade-in-up hover-lift">
+        <div className="text-center space-y-6 animate-slide-in-right">
+          <div className="flex justify-center animate-bounce-gentle">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/50 dark:to-teal-900/50 rounded-full flex items-center justify-center shadow-xl backdrop-blur-sm">
+              <svg
+                className="w-10 h-10 text-emerald-600 dark:text-emerald-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <div className="relative group animate-fade-in-up hover-lift" style={{ animationDelay: "0.4s" }}>
             <input
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               placeholder=" "
-              className="w-full px-4 py-4 bg-white/60 dark:bg-slate-800/60 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-500 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-lg hover:scale-[1.02] peer font-open-sans text-center text-2xl tracking-widest backdrop-blur-sm"
-              maxLength={6}
+              className="w-full px-4 py-4 bg-white/60 dark:bg-slate-800/60 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white placeholder-transparent focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all duration-500 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-lg hover:scale-[1.02] peer font-open-sans backdrop-blur-sm"
               required
             />
             <label className="absolute left-4 -top-2.5 bg-white dark:bg-slate-800 px-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 transition-all duration-300 peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-700 dark:peer-placeholder-shown:text-slate-300 peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-emerald-600 peer-focus:bg-white dark:peer-focus:bg-slate-800 font-work-sans">
               Verification Code
             </label>
           </div>
-
-          {error && (
-            <div className="animate-bounce-gentle hover-lift">
-              <div className="flex items-center space-x-3 text-red-600 dark:text-red-400 text-sm bg-red-50/80 dark:bg-red-900/30 p-4 rounded-2xl border border-red-200 dark:border-red-800 shadow-lg backdrop-blur-sm transition-all duration-300">
-                <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0 animate-pulse">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <span className="font-medium font-open-sans">{error}</span>
-              </div>
-            </div>
-          )}
 
           {message && (
             <div className="animate-bounce-gentle hover-lift">
@@ -434,26 +483,28 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           )}
 
           <button
-            type="submit"
+            type="button"
+            onClick={handleVerify}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-4 px-6 rounded-2xl font-semibold hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 transform hover:scale-105 hover:shadow-2xl active:scale-95 ripple-effect font-work-sans hover-glow"
+            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-4 px-6 rounded-2xl font-semibold hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 transform hover:scale-105 hover:shadow-2xl active:scale-95 ripple-effect animate-fade-in-up font-work-sans hover-glow"
+            style={{ animationDelay: "0.45s" }}
           >
             <div className="flex items-center justify-center space-x-2">
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Verifying...</span>
+                  <span>Verifying Account...</span>
                 </>
               ) : (
                 <>
-                  <span>Verify Email</span>
+                  <span>Verify Account</span>
                   <svg
-                    className="w-5 h-5 transition-transform duration-300"
+                    className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </>
               )}
@@ -462,19 +513,23 @@ export default function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
           <div className="text-center animate-fade-in">
             <button
-              type="button"
               onClick={handleResendCode}
               disabled={resendLoading || resendCooldown > 0}
-              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 hover:scale-105 hover-float font-work-sans"
+              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-sm font-medium transition-all duration-500 hover:scale-105 hover-float font-work-sans"
             >
-              {resendLoading
-                ? "Sending..."
-                : resendCooldown > 0
-                  ? `Resend code in ${resendCooldown}s`
-                  : "Didn't receive code? Resend"}
+              {resendCooldown > 0 ? `Resend Code in ${resendCooldown}s` : "Resend Verification Code"}
             </button>
           </div>
-        </form>
+
+          <div className="text-center animate-fade-in">
+            <button
+              onClick={onSwitchToLogin}
+              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-sm font-medium transition-all duration-500 hover:scale-105 hover-float font-work-sans"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-200/20 rounded-full blur-2xl animate-pulse-slow pointer-events-none"></div>

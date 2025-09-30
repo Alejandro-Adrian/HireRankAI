@@ -1,30 +1,33 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { findUserByEmail } from "@/lib/storage"
+import { verifyAuthToken } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
-    // In a real app, you'd get the user email from a JWT token or session
-    // For now, we'll get it from the query params or headers
-    const email = request.headers.get("x-user-email") || request.nextUrl.searchParams.get("email")
+    const token = request.cookies.get("auth-token")?.value
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 })
+    if (!token) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const user = await findUserByEmail(email)
+    const userPayload = await verifyAuthToken(token)
+    if (!userPayload) {
+      return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 })
+    }
+
+    const user = await findUserByEmail(userPayload.email)
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Return user data (excluding sensitive information)
     return NextResponse.json({
       user: {
-        id: user.id,
+        name: `${user.firstname || ""} ${user.lastname || ""}`.trim(),
+        firstname: user.firstname || "",
+        lastname: user.lastname || "",
         email: user.email,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        company_name: user.company_name,
-        is_verified: user.is_verified,
+        bio: user.bio || "",
+        company_name: user.company_name || "",
       },
     })
   } catch (error) {

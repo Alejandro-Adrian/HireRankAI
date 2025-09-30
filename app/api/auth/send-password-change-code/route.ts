@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createAdminClient } from "@/lib/supabase/server"
 import { sendEmail, createPasswordChangeEmailHTML } from "@/lib/email"
 import bcrypt from "bcryptjs"
 
@@ -12,14 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and current password are required" }, { status: 400 })
     }
 
-    const cookieStore = cookies()
-    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    })
+    const supabase = await createAdminClient()
 
     // Get user
     const { data: user, error: userError } = await supabase.from("users").select("*").eq("email", email).single()
