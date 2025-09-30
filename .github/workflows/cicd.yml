@@ -30,8 +30,4 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      #- name: Create test env file
-      # run: |
-      #    echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.test
-      #    echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.test
-      #    echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env.test
+    
