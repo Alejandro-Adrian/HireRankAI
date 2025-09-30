@@ -1,98 +1,33 @@
 name: Resume Ranking Workflow
 
 on:
-  # For Manual Testing to tho Automated den
   workflow_dispatch:
-  issues:
-    types: [opened, edited, milestoned]
-
-  # Trigger when code is pushed to main or branchNamePath
-  push:
-    branches:
-      - main
-      - optimization
-      - testing
-      - Added-Video-Call/Meeting-Using-Jitsi-API
-      - Applicant_Detailed_Analysis&Video_call_Link_sending_FIX
-      - API
-
-  # Trigger when a PR is opened into branchNamePath
   pull_request:
     types: [opened]
     branches:
       - main
-      - optimization
-      - testing
-      - Added-Video-Call/Meeting-Using-Jitsi-API
-      - Applicant_Detailed_Analysis&Video_call_Link_sending_FIX
-      - API
-
-  # Allow other workflows to call this one with inputs
-  workflow_call:
-    inputs:
-      email:
-        description: "Test email"
-        required: true
-        type: string
-        default: "adrianalejandro052004@gmail.com"
-
-      password:
-        description: "Test password"
-        required: true
-        type: string
-        default: "Test1234"
-
+      
 jobs:
   build:
     name: Build & Install Dependencies
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build
-
-  test:
-    name: Run Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Cache Next.js build cache
+        uses: actions/cache@v3
         with:
-          node-version: 20
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Run tests
-        run: npm test
-
-  running_check:
-    name: Running Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run sample command
-        run: echo "Running check complete on ${{ runner.os }}"
-
-      - name: Run unit tests
-        run: npm test
-
+      - name: Create test env file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.test
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.test
+          echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env.test

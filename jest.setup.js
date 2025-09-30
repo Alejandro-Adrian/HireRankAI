@@ -1,4 +1,5 @@
 "use client"
+require("dotenv").config({ path: ".env.test" })
 
 import { jest } from "@jest/globals"
 import "@testing-library/jest-dom"
