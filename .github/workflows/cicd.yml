@@ -3,8 +3,8 @@ name: Resume Ranking Workflow
 on:
   workflow_dispatch:
   push:
-   branches:
-    - UnitTesting 
+    branches:
+      - main 
 
   pull_request:
     types: [opened]
