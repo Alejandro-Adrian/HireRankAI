@@ -5,25 +5,39 @@ import { POST } from "@/app/api/auth/login/route"
 import { NextRequest } from "next/server"
 import { jest } from "@jest/globals"
 
-// Mock Supabase
-jest.mock("@/lib/supabase/server", () => ({
-  createServerClient: jest.fn(() => ({
-    auth: {
-      signInWithPassword: jest.fn(),
-    },
-  })),
+// 🧹 Silence console errors during tests
+beforeAll(() => {
+  jest.spyOn(console, "error").mockImplementation(() => { })
+})
+
+// ✅ Mock only what your route.ts actually uses
+jest.mock("@/lib/storage", () => ({
+  findUserByEmail: jest.fn(() => Promise.resolve(null)), // ✅ no generics
+  verifyPassword: jest.fn(() => Promise.resolve(false)), // ✅ no generics
 }))
 
+jest.mock("@/lib/auth", () => ({
+  createAuthToken: jest.fn(() => Promise.resolve("mocked-token")), // ✅ no generics
+}))
+
+// Import mocks after defining jest.mock()
+import { findUserByEmail, verifyPassword } from "@/lib/storage"
+import { createAuthToken } from "@/lib/auth"
+
 describe("/api/auth/login", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   it("handles successful login", async () => {
-    const mockSupabase = require("@/lib/supabase/server").createServerClient()
-    mockSupabase.auth.signInWithPassword.mockResolvedValue({
-      data: {
-        user: { id: "1", email: "test@example.com" },
-        session: { access_token: "token" },
-      },
-      error: null,
+    // ✅ Mock a valid, verified user
+    ; (findUserByEmail as jest.MockedFunction<typeof findUserByEmail>).mockResolvedValue({
+      id: 1,
+      email: "test@example.com",
+      is_verified: true,
+      password_hash: "hashedpassword",
     })
+      ; (verifyPassword as jest.MockedFunction<typeof verifyPassword>).mockResolvedValue(true)
 
     const request = new NextRequest("http://localhost:3000/api/auth/login", {
       method: "POST",
@@ -31,6 +45,7 @@ describe("/api/auth/login", () => {
         email: "test@example.com",
         password: "password123",
       }),
+      headers: { "Content-Type": "application/json" },
     })
 
     const response = await POST(request)
@@ -39,14 +54,17 @@ describe("/api/auth/login", () => {
     expect(response.status).toBe(200)
     expect(data.user).toBeDefined()
     expect(data.user.email).toBe("test@example.com")
+    expect(createAuthToken).toHaveBeenCalled()
   })
 
-  it("handles login failure", async () => {
-    const mockSupabase = require("@/lib/supabase/server").createServerClient()
-    mockSupabase.auth.signInWithPassword.mockResolvedValue({
-      data: { user: null, session: null },
-      error: { message: "Invalid credentials" },
+  it("handles login failure - invalid password", async () => {
+    ; (findUserByEmail as jest.MockedFunction<typeof findUserByEmail>).mockResolvedValue({
+      id: 1,
+      email: "test@example.com",
+      is_verified: true,
+      password_hash: "hashedpassword",
     })
+      ; (verifyPassword as jest.MockedFunction<typeof verifyPassword>).mockResolvedValue(false)
 
     const request = new NextRequest("http://localhost:3000/api/auth/login", {
       method: "POST",
@@ -54,13 +72,39 @@ describe("/api/auth/login", () => {
         email: "test@example.com",
         password: "wrongpassword",
       }),
+      headers: { "Content-Type": "application/json" },
     })
 
     const response = await POST(request)
     const data = await response.json()
 
     expect(response.status).toBe(401)
-    expect(data.error).toBe("Invalid credentials")
+    expect(data.error).toBe("Invalid email or password")
+  })
+
+  it("rejects unverified users", async () => {
+    ; (findUserByEmail as jest.MockedFunction<typeof findUserByEmail>).mockResolvedValue({
+      id: 1,
+      email: "test@example.com",
+      is_verified: false,
+      password_hash: "hashedpassword",
+    })
+      ; (verifyPassword as jest.MockedFunction<typeof verifyPassword>).mockResolvedValue(true)
+
+    const request = new NextRequest("http://localhost:3000/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "test@example.com",
+        password: "password123",
+      }),
+      headers: { "Content-Type": "application/json" },
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(data.error).toBe("Please verify your email before logging in")
   })
 
   it("validates required fields", async () => {
@@ -70,6 +114,7 @@ describe("/api/auth/login", () => {
         email: "test@example.com",
         // Missing password
       }),
+      headers: { "Content-Type": "application/json" },
     })
 
     const response = await POST(request)

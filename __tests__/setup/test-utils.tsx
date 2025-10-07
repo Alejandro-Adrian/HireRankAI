@@ -4,7 +4,6 @@ import type React from "react"
 import type { ReactElement } from "react"
 import { render, type RenderOptions } from "@testing-library/react"
 import { ThemeProvider } from "@/components/theme-provider"
-import jest from "jest" // Import jest to fix the undeclared variable error
 
 // Mock Next.js router
 jest.mock("next/navigation", () => ({
