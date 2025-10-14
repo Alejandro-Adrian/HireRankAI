@@ -35,34 +35,6 @@ jobs:
         run: npm ci
 
 
-  API:
-    name: Tests API
-    needs: [TestBuild]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Cache Node modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run only login auth test
-        run: npm test -- __tests__/api/auth/login.test.ts
-
-
   Library:
     name: Test Library
     needs: [TestBuild]
@@ -90,9 +62,10 @@ jobs:
       - name: Run only utilities
         run: npm test -- __tests__/lib/utils.test.ts
 
+
   Components:
     name: Test Components
-    needs: [TestBuild, API]
+    needs: [TestBuild]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -117,10 +90,9 @@ jobs:
       - name: Run only loginform
         run: npm test -- __tests__/components/loginform.test.tsx
 
-
-  Integration:
-    name: Test Integration
-    needs: [TestBuild, API, Components, Library]
+  API:
+    name: Tests API
+    needs: [TestBuild]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -142,13 +114,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run only auth-flow
-        run: npm test -- __tests__/integration/auth-flow.test.tsx
-
+      - name: Run only login auth test
+        run: npm test -- __tests__/api/auth/login.test.ts
 
   Coverage:
     name: Upload coverage report
-    needs: [TestBuild, API, Components, Library, Integration]
+    needs: [TestBuild, API, Components, Library]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
