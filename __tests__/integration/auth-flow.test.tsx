@@ -1,20 +1,30 @@
-import { render, screen, waitFor, act } from "@testing-library/react"
+/**
+ * @fileoverview Full authentication flow integration test
+ * Works with React 18, Next.js 14+, and Testing Library
+ */
+
+import { render, screen, waitFor, act } from "../setup/test-utils"
 import userEvent from "@testing-library/user-event"
 import Home from "@/app/page"
 import { jest } from "@jest/globals"
+import { waitForLoadingToFinish } from "../setup/test-utils"
 
-// Mock localStorage
+// ✅ Mock localStorage globally
 const localStorageMock = {
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
 }
-global.localStorage = localStorageMock
+Object.defineProperty(window, "localStorage", {
+  value: localStorageMock,
+  writable: true,
+})
 
-// Mock fetch
-const mockFetch = jest.fn()
-global.fetch = mockFetch
+// ✅ Correct Type: mockFetch is a function returning a Promise<Response-like>
+const mockFetch = jest.fn<() => Promise<Partial<Response>>>()
+global.fetch = mockFetch as unknown as typeof fetch
+
 
 describe("Authentication Flow Integration", () => {
   beforeEach(() => {
@@ -26,49 +36,69 @@ describe("Authentication Flow Integration", () => {
     const user = userEvent.setup()
     const mockUserData = { id: 1, email: "test@example.com", name: "Test User" }
 
+    // ✅ Mock API response for login
     mockFetch.mockResolvedValueOnce({
       ok: true,
+      status: 200,
       json: async () => ({ user: mockUserData }),
     })
 
     render(<Home />)
+    await waitForLoadingToFinish()
 
-    // Should show login form initially
-    expect(screen.getByText("Welcome Back")).toBeInTheDocument()
+    // ✅ Should show login form initially
+    expect(await screen.findByText(/welcome back/i)).toBeInTheDocument()
 
+    // ✅ Simulate login
     await act(async () => {
-      await user.type(screen.getByLabelText("Email Address"), "test@example.com")
-      await user.type(screen.getByLabelText("Password"), "password123")
+      await user.type(screen.getByLabelText(/email address/i), "test@example.com")
+      await user.type(screen.getByLabelText(/password/i), "password123")
       await user.click(screen.getByRole("button", { name: /sign in/i }))
     })
 
-    // Should redirect to dashboard after successful login
+    // ✅ Should store user in localStorage after successful login
     await waitFor(() => {
-      expect(localStorageMock.setItem).toHaveBeenCalledWith("user", JSON.stringify(mockUserData))
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        "user",
+        JSON.stringify(mockUserData)
+      )
     })
   })
 
-  it("persists user session on page reload", () => {
+  it("persists user session on page reload", async () => {
     const mockUserData = { id: 1, email: "test@example.com", name: "Test User" }
     localStorageMock.getItem.mockReturnValue(JSON.stringify(mockUserData))
 
     render(<Home />)
+    await waitForLoadingToFinish()
 
-    // Should show dashboard if user is already logged in
+    // ✅ Should check for persisted session
     expect(localStorageMock.getItem).toHaveBeenCalledWith("user")
+
+    // ✅ Should display dashboard UI (if implemented)
+    await waitFor(() => {
+      expect(screen.getByText(/dashboard/i)).toBeInTheDocument()
+    })
   })
 
   it("handles logout correctly", async () => {
     const user = userEvent.setup()
     const mockUserData = { id: 1, email: "test@example.com", name: "Test User" }
 
-    // Mock user already logged in
     localStorageMock.getItem.mockReturnValue(JSON.stringify(mockUserData))
 
     render(<Home />)
+    await waitForLoadingToFinish()
 
-    // Find and click logout button (assuming it exists in Dashboard)
-    const logoutButton = screen.queryByText("Logout") || screen.queryByText("Sign Out")
+    // ✅ Find logout button (supports multiple naming options)
+    const logoutButton =
+      screen.queryByRole("button", { name: /logout/i }) ||
+      screen.queryByRole("button", { name: /sign out/i }) ||
+      screen.queryByText(/logout/i) ||
+      screen.queryByText(/sign out/i)
+
+    expect(logoutButton).toBeTruthy()
+
     if (logoutButton) {
       await act(async () => {
         await user.click(logoutButton)
@@ -76,7 +106,7 @@ describe("Authentication Flow Integration", () => {
 
       await waitFor(() => {
         expect(localStorageMock.removeItem).toHaveBeenCalledWith("user")
-        expect(screen.getByText("Welcome Back")).toBeInTheDocument()
+        expect(screen.getByText(/welcome back/i)).toBeInTheDocument()
       })
     }
   })

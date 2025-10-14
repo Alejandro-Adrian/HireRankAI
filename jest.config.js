@@ -1,34 +1,16 @@
-const nextJest = require("next/jest")
-
-// Create a custom Jest config using Next.js' config loader
-const createJestConfig = nextJest({
-  dir: "./", // Path to your Next.js app (where next.config.js and .env live)
-})
-
-/** @type {import('jest').Config} */
-const customJestConfig = {
-  // Run setup before each test
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-
-  // Jest environment for React/Next.js components
-  testEnvironment: "jest-environment-jsdom",
-
-  // Ignore these folders from test discovery
-  testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/"],
-
-  // Allow `@/` imports to map to the root
+export default {
+  testEnvironment: "jsdom",
+  transform: {
+    "^.+\\.(ts|tsx)$": ["ts-jest", { tsconfig: "tsconfig.json" }],
+  },
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
+    "\\.(css|less|scss|sass)$": "identity-obj-proxy",
   },
-
-  // Collect coverage only from app code
-  collectCoverageFrom: [
-    "components/**/*.{js,jsx,ts,tsx}",
-    "lib/**/*.{js,jsx,ts,tsx}",
-    "app/**/*.{js,jsx,ts,tsx}",
-    "!**/*.d.ts",
-    "!**/node_modules/**",
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
+  testPathIgnorePatterns: ["/node_modules/", "/.next/"],
+  transformIgnorePatterns: [
+    "/node_modules/(?!(next|@?react|@testing-library)/)",
   ],
-}
-
-module.exports = createJestConfig(customJestConfig)
+  clearMocks: true,
+};
